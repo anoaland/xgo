@@ -22,7 +22,7 @@ func (config PgDatabaseConfig) JsonString() string {
 	return string(jsonConfig)
 }
 
-func isValid(config PgDatabaseConfig) bool {
+func IsValid(config PgDatabaseConfig) bool {
 	notValid := config.Name == "" || config.Host == "" || config.User == "" || config.Password == "" || config.Port == ""
 
 	return !notValid

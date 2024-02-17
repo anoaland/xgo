@@ -52,7 +52,7 @@ import (
 //	  }
 //	  excludes = local.dbenv.revisionsSchema
 //	}
-func AtlasMain(dialect string, initialSql string, config AtlasConfig, models ...any) {
+func AtlasMain(dialect string, initialSql string, config AtlasConfig, models []interface{}) {
 	// argsWithProg := os.Args
 	argsWithoutProg := os.Args[1:]
 
@@ -63,7 +63,7 @@ func AtlasMain(dialect string, initialSql string, config AtlasConfig, models ...
 
 	switch argsWithoutProg[0] {
 	case "m":
-		loadModels(dialect, initialSql, models...)
+		loadModels(dialect, initialSql, models)
 	case "e":
 		loadEnv(config)
 	default:
@@ -83,9 +83,10 @@ func AtlasMain(dialect string, initialSql string, config AtlasConfig, models ...
 //	    "m"
 //	  ]
 //	}
-func loadModels(dialect string, sql string, models ...any) {
+func loadModels(dialect string, sql string, models []interface{}) {
 
-	stmts, err := gormschema.New(dialect).Load(models)
+	stmts, err := gormschema.New(dialect).Load(models...)
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load gorm schema: %v\n", err)
 		os.Exit(1)
