@@ -13,6 +13,10 @@ type HttpError struct {
 	Message   string
 }
 
+func NewHttpError(message string, errorCode int) *HttpError {
+	return &HttpError{Message: message, ErrorCode: errorCode}
+}
+
 func (e *HttpError) Error() string {
 	return e.Message
 }
