@@ -8,9 +8,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func Connect(config *SqlServerDatabaseConfig) *gorm.DB {
+func Connect(config *SqlServerDatabaseConfig, options *gorm.Config) *gorm.DB {
 	dsn := config.Dsn(nil)
-	db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(sqlserver.Open(dsn), options)
 
 	dbname := config.Name
 	host := config.Host
