@@ -74,7 +74,7 @@ func (server *WebServer) Run(port int, onShutdown func() error) {
 		_ = server.App.Shutdown()
 	}()
 	// see: https://adrianhesketh.com/2021/05/28/templ-hot-reload-with-air/
-	addr := fmt.Sprintf("localhost:%d", port)
+	addr := fmt.Sprintf(":%d", port)
 	err := server.App.Listen(addr)
 
 	if err != nil {
