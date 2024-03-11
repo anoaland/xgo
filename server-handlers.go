@@ -2,6 +2,7 @@ package xgo
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/Nerzal/gocloak"
@@ -9,12 +10,18 @@ import (
 )
 
 type HttpError struct {
-	ErrorCode int
-	Message   string
+	ErrorCode     int
+	Message       string
+	StatusCode    *string
+	InternalError *error
 }
 
 func NewHttpError(message string, errorCode int) *HttpError {
 	return &HttpError{Message: message, ErrorCode: errorCode}
+}
+
+func NewHttpInternalError(statusCode string, err error) *HttpError {
+	return &HttpError{Message: "Terjadi kesalahan", ErrorCode: fiber.StatusInternalServerError, InternalError: &err, StatusCode: &statusCode}
 }
 
 func (e *HttpError) Error() string {
@@ -24,6 +31,14 @@ func (e *HttpError) Error() string {
 func (server *WebServer) Error(ctx *fiber.Ctx, err error) error {
 	var httpErr *HttpError
 	if errors.As(err, &httpErr) {
+
+		if httpErr.InternalError != nil {
+			// TODO: Connect sentry on this line
+			log.Println(*httpErr.StatusCode)
+			log.Println(*httpErr.InternalError)
+
+		}
+
 		return ctx.Status(httpErr.ErrorCode).SendString(err.Error())
 	}
 
@@ -36,6 +51,7 @@ func (server *WebServer) Error(ctx *fiber.Ctx, err error) error {
 		errorCode := apiErr.Code
 
 		if errorCode == 0 {
+			// TODO: Connect sentry on this line
 			errorCode = 500
 		}
 
