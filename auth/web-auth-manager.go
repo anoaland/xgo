@@ -9,7 +9,7 @@ import (
 const USER_LOCAL_KEY = "x-user"
 
 type WebAuthClient interface {
-	GetUserFromToken(token string) (*AppUser, error)
+	GetUserFromToken(token string) (any, error)
 }
 
 type WebAuthManager struct {
@@ -84,13 +84,9 @@ func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-func (m *WebAuthManager) User(ctx *fiber.Ctx) *AppUser {
+func (m *WebAuthManager) User(ctx *fiber.Ctx) any {
 
-	appUser, ok := ctx.Locals(USER_LOCAL_KEY).(*AppUser)
-
-	if !ok {
-		return nil
-	}
+	appUser := ctx.Locals(USER_LOCAL_KEY)
 
 	return appUser
 }

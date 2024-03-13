@@ -13,7 +13,7 @@ import (
 )
 
 type AuthManager interface {
-	GetCurrentUser(ctx *fiber.Ctx) *auth.AppUser
+	GetCurrentUser(ctx *fiber.Ctx) interface{}
 }
 
 type WebServer struct {
