@@ -28,17 +28,15 @@ func ExtractValidationError(req interface{}) error {
 			var e error
 			switch err.Tag() {
 			case "required":
-				e = fmt.Errorf("'%s' tidak boleh kosong", err.Field())
+				e = fmt.Errorf("'%s' harus diisi", err.Field())
 			case "email":
-				e = fmt.Errorf("field '%s' harus format email", err.Field())
-			case "eth_addr":
-				e = fmt.Errorf("field '%s' must  be a valid Ethereum address", err.Field())
+				e = fmt.Errorf("'%s' harus mengikuti format email", err.Field())
 			case "len":
-				e = fmt.Errorf("field '%s' must be exactly %v characters long", err.Field(), err.Param())
+				e = fmt.Errorf("panjang '%s'  %v karakter", err.Field(), err.Param())
 			case "datetime":
 				e = fmt.Errorf("'%s' harus mengikuti format %v ", err.Field(), err.Param())
 			default:
-				e = fmt.Errorf("field '%s': '%v' must satisfy '%s' '%v' criteria", err.Field(), err.Value(), err.Tag(), err.Param())
+				e = fmt.Errorf("'%s': '%v' harus berkriteria '%s' '%v' ", err.Field(), err.Value(), err.Tag(), err.Param())
 			}
 
 			message = e
