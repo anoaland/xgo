@@ -19,6 +19,7 @@ type HttpClient struct {
 	ErrorPrefix     string
 	LogRequest      bool
 	LogResponse     bool
+	RespHttpCode    int
 }
 
 type HttpClientHeaders struct {
@@ -66,6 +67,7 @@ func (hc *HttpClient) Send() (interface{}, error) {
 
 	// get response raw
 	respCode, respBody, respErrs := client.Bytes()
+	hc.RespHttpCode = respCode
 	if respErrs != nil {
 		err := errors.New(extractResponseErrors(respErrs))
 		return nil, err

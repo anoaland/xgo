@@ -11,7 +11,7 @@ type Pagination struct {
 	SortOrder  string      `json:"-" query:"sortOrder"`
 	Keyword    string      `json:"-" query:"keyword"`
 	TotalData  int64       `json:"totalData"`
-	TotalPages int         `json:"total_pages"`
+	TotalPages int         `json:"totalPages"`
 	Rows       interface{} `json:"-"`
 }
 
