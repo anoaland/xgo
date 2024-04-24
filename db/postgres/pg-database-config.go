@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 )
 
@@ -22,8 +23,18 @@ func (config PgDatabaseConfig) JsonString() string {
 	return string(jsonConfig)
 }
 
-func IsValid(config PgDatabaseConfig) bool {
+func (config PgDatabaseConfig) IsValid() bool {
 	notValid := config.Name == "" || config.Host == "" || config.User == "" || config.Password == "" || config.Port == ""
 
 	return !notValid
+}
+
+func (config PgDatabaseConfig) Dsn() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		config.User,
+		config.Password,
+		config.Host,
+		config.Port,
+		config.Name,
+	)
 }
