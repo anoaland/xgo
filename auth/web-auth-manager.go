@@ -47,7 +47,7 @@ func NewWebAuthManager(client WebAuthClient, opts *BearerTokenMiddlewareConfig) 
 }
 
 func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
-	var token string
+	var token *string
 
 	// get bearer token from request authorization header
 	headerValue := ctx.Get("authorization")
@@ -56,21 +56,25 @@ func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
 		components := strings.SplitN(headerValue, " ", 2)
 
 		if len(components) == 2 && components[0] == m.bearerTokenConfig.HeaderKey {
-			token = components[1]
+			token = &components[1]
 		}
 	} else {
 		// get bearer token from query parameter
 		queryValue := ctx.Query(m.bearerTokenConfig.QueryKey)
 
 		if len(queryValue) > 0 {
-			token = queryValue
+			token = &queryValue
 		}
 	}
 	//
 	// else, we might want to get token from Body or Request Parameters
 	//
 
-	user, err := m.client.GetUserFromToken(token)
+	if token == nil {
+		return ctx.SendStatus(401)
+	}
+
+	user, err := m.client.GetUserFromToken(*token)
 
 	if err != nil {
 		return err
