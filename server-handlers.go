@@ -39,7 +39,7 @@ func (server *WebServer) Error(ctx *fiber.Ctx, err error) error {
 
 		}
 
-		return ctx.Status(httpErr.ErrorCode).SendString(err.Error())
+		return ctx.Status(httpErr.ErrorCode).JSON(err.Error())
 	}
 
 	var apiErr *gocloak.APIError
