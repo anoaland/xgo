@@ -17,7 +17,7 @@ type RecorderLogger struct {
 func (r *RecorderLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	sql, code := fc()
 
-	if code > -1 {
+	if code == 0 {
 		r.Statements = append(r.Statements, sql)
 	}
 }
