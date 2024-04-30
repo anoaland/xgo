@@ -39,7 +39,8 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) Update(payload DUpdate, wher
 	return &res, nil
 }
 
-func (r *Repository[M, D, DList, DCreate, DUpdate]) SoftDelete(model M, whereQuery interface{}, whereArgs ...interface{}) error {
+func (r *Repository[M, D, DList, DCreate, DUpdate]) SoftDelete(whereQuery interface{}, whereArgs ...interface{}) error {
+	model := new(*M)
 	now := time.Now().UTC()
 	err := r.db.Model(&model).Where(whereQuery, whereArgs...).Updates(
 		map[string]interface{}{
@@ -49,9 +50,10 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) SoftDelete(model M, whereQue
 	return err
 }
 
-func (r *Repository[M, D, DList, DCreate, DUpdate]) FindAll(conds ...interface{}) ([]DList, error) {
+func (r *Repository[M, D, DList, DCreate, DUpdate]) FindAll(conds interface{}, orderBy interface{}, args ...interface{}) ([]DList, error) {
+	model := new(*M)
 	var rows *[]M
-	r.db.Find(&rows, conds)
+	r.db.Model(&model).Where(conds, args...).Order(orderBy).Find(&rows)
 
 	return r.MapList(rows), nil
 }
