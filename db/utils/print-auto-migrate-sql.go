@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"log"
 	"strings"
 	"time"
 
@@ -18,7 +19,9 @@ func (r *RecorderLogger) Trace(ctx context.Context, begin time.Time, fc func() (
 	sql, code := fc()
 
 	if code == 0 {
-		r.Statements = append(r.Statements, sql)
+		if !strings.Contains(sql, "pg_catalog.pg_description") {
+			r.Statements = append(r.Statements, sql)
+		}
 	}
 }
 
@@ -30,10 +33,14 @@ func (r *RecorderLogger) Trace(ctx context.Context, begin time.Time, fc func() (
 func PrintAutoMigrateSql(db *gorm.DB, dst ...interface{}) string {
 	// thanks to: https://stackoverflow.com/a/66246127/1586914
 
-	recorder := RecorderLogger{logger.Default.LogMode(logger.Info), []string{}}
+	recorder := RecorderLogger{logger.Default.LogMode(logger.Silent), []string{}}
 	session := db.Session(&gorm.Session{DryRun: true, Logger: &recorder})
-	session.AutoMigrate(dst...)
+	err := session.AutoMigrate(dst...)
+	if err != nil {
+		log.Fatalf("failed to generate automigrate sql: %v", err)
+	}
 
 	sql := strings.Join(recorder.Statements, ";\r\n")
+
 	return sql
 }
