@@ -45,15 +45,14 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) Create(payload DCreate) (*D,
 	return &res, nil
 }
 
-func (r *Repository[M, D, DList, DCreate, DUpdate]) Update(payload DUpdate, whereQuery interface{}, whereArgs ...interface{}) (*D, error) {
+func (r *Repository[M, D, DList, DCreate, DUpdate]) Update(payload DUpdate, whereQuery interface{}, whereArgs ...interface{}) error {
 	values := payload.ToModel()
 	err := r.db.Model(&values).Where(whereQuery, whereArgs...).Updates(&values).Error
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	res := payload.FromModel(values)
-	return &res, nil
+	return nil
 }
 
 func (r *Repository[M, D, DList, DCreate, DUpdate]) SoftDelete(whereQuery interface{}, whereArgs ...interface{}) error {
@@ -105,7 +104,7 @@ type IDto[M interface{}, D interface{}] interface {
 
 type IUpdateDto[M interface{}, D interface{}] interface {
 	ToModel() M
-	FromModel(M) D // IDto[M]
+	// FromModel(M) D // IDto[M]
 }
 
 type ICreateDto[M interface{}] interface {
