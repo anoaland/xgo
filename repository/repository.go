@@ -42,7 +42,7 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) Create(payload DCreate) (*D,
 
 	var d D
 	res := d.FromModel(values)
-	return &res, nil
+	return res, nil
 }
 
 func (r *Repository[M, D, DList, DCreate, DUpdate]) Update(payload DUpdate, whereQuery interface{}, whereArgs ...interface{}) error {
@@ -56,13 +56,10 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) Update(payload DUpdate, wher
 }
 
 func (r *Repository[M, D, DList, DCreate, DUpdate]) SoftDelete(whereQuery interface{}, whereArgs ...interface{}) error {
-	model := new(*M)
+	model := new(M)
 	now := time.Now().UTC()
-	err := r.db.Model(&model).Where(whereQuery, whereArgs...).Updates(
-		map[string]interface{}{
-			"deleted_at": &now,
-		},
-	).Error
+	err := r.db.Model(model).Where(whereQuery, whereArgs...).Update("DeletedAt", now).Error
+
 	return err
 }
 
@@ -78,7 +75,7 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) MapList(rows *[]M) []DList {
 	results := make([]DList, 0, len(*rows))
 	for _, row := range *rows {
 		var d DList
-		results = append(results, d.FromModel(row))
+		results = append(results, *d.FromModel(&row))
 	}
 
 	return results
@@ -93,20 +90,20 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) FindOne(conds ...interface{}
 	}
 
 	var d D
-	res := d.FromModel(*value)
-	return &res, nil
+	res := d.FromModel(value)
+	return res, nil
 }
 
 type IDto[M interface{}, D interface{}] interface {
-	ToModel() M
-	FromModel(M) D // IDto[M]
+	ToModel() *M
+	FromModel(*M) *D // IDto[M]
 }
 
 type IUpdateDto[M interface{}, D interface{}] interface {
-	ToModel() M
+	ToModel() *M
 	// FromModel(M) D // IDto[M]
 }
 
 type ICreateDto[M interface{}] interface {
-	ToModel() M
+	ToModel() *M
 }
