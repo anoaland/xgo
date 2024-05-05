@@ -45,6 +45,16 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) Create(payload DCreate) (*D,
 	return res, nil
 }
 
+func (r *Repository[M, D, DList, DCreate, DUpdate]) CreateRaw(payload DCreate) (*M, error) {
+	values := payload.ToModel()
+	err := r.db.Create(&values).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return values, nil
+}
+
 func (r *Repository[M, D, DList, DCreate, DUpdate]) Update(payload DUpdate, whereQuery interface{}, whereArgs ...interface{}) error {
 	values := payload.ToModel()
 	err := r.db.Model(&values).Where(whereQuery, whereArgs...).Updates(&values).Error
