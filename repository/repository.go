@@ -46,8 +46,12 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) Create(payload DCreate) (*D,
 }
 
 func (r *Repository[M, D, DList, DCreate, DUpdate]) CreateRaw(payload DCreate) (*M, error) {
+	return r.CreateRawInTransaction(r.db, payload)
+}
+
+func (*Repository[M, D, DList, DCreate, DUpdate]) CreateRawInTransaction(db *gorm.DB, payload DCreate) (*M, error) {
 	values := payload.ToModel()
-	err := r.db.Create(&values).Error
+	err := db.Create(&values).Error
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +60,12 @@ func (r *Repository[M, D, DList, DCreate, DUpdate]) CreateRaw(payload DCreate) (
 }
 
 func (r *Repository[M, D, DList, DCreate, DUpdate]) Update(payload DUpdate, whereQuery interface{}, whereArgs ...interface{}) error {
+	return r.UpdateInTransaction(r.db, payload, whereQuery, whereArgs...)
+}
+
+func (*Repository[M, D, DList, DCreate, DUpdate]) UpdateInTransaction(db *gorm.DB, payload DUpdate, whereQuery interface{}, whereArgs ...interface{}) error {
 	values := payload.ToModel()
-	err := r.db.Model(&values).Where(whereQuery, whereArgs...).Updates(&values).Error
+	err := db.Model(&values).Where(whereQuery, whereArgs...).Updates(&values).Error
 	if err != nil {
 		return err
 	}
