@@ -3,6 +3,7 @@ package auth
 import (
 	"strings"
 
+	"github.com/anoaland/xgo/errors"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -75,9 +76,8 @@ func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
 	}
 
 	user, err := m.client.GetUserFromToken(*token)
-
 	if err != nil {
-		return err
+		return errors.NewXgoError("WEB_AUTH_MANAGER__GetUserFromToken", err)
 	}
 
 	ctx.Locals(USER_LOCAL_KEY, user)
