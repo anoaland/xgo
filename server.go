@@ -40,8 +40,8 @@ func (xr XRouter) XGroup(prefix string) *XRouter {
 	}
 }
 
-func New() *WebServer {
-	app := fiber.New()
+func New(config ...fiber.Config) *WebServer {
+	app := fiber.New(config...)
 
 	return &WebServer{
 		App: app,
