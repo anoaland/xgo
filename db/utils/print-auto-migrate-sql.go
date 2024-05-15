@@ -60,7 +60,7 @@ func PrintAutoMigrateSqlx(db *gorm.DB, dst ...interface{}) string {
 
 	sql := strings.Join(recorder.Statements, ";\r\n")
 
-	return sql
+	return sql + ";"
 }
 
 // thanks to: https://github.com/go-gorm/gorm/issues/3851#issuecomment-929752108
@@ -79,5 +79,5 @@ func PrintAutoMigrateSql(db *gorm.DB, dst ...interface{}) string {
 		fmt.Println(s)
 	}
 
-	return strings.Join(statements, ";\r\n")
+	return strings.Join(statements, ";\r\n") + ";"
 }
