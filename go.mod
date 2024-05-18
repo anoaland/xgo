@@ -4,7 +4,7 @@ go 1.21.6
 
 require (
 	github.com/Nerzal/gocloak v1.0.0
-	github.com/gofiber/fiber/v2 v2.52.1
+	github.com/gofiber/fiber/v2 v2.52.4
 )
 
 require (
