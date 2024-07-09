@@ -3,6 +3,7 @@ package repository
 import (
 	"math"
 	"strings"
+	"time"
 
 	"github.com/anoaland/xgo/dto"
 	"gorm.io/gorm"
@@ -59,4 +60,14 @@ func txWithPeloads(tx *gorm.DB, preloadList []string) *gorm.DB {
 	}
 
 	return tx
+}
+
+// special function if column didn't save with UTC time and you have to used this function to get the local time
+func LocalTime(value time.Time) time.Time {
+
+	_, offset := time.Now().Zone()
+
+	offsetHours := (offset / 3600.0) * -1
+
+	return value.UTC().Add(time.Duration(offsetHours) * time.Hour)
 }
