@@ -2,7 +2,6 @@ package xgo
 
 import (
 	"errors"
-	"log"
 	"strings"
 
 	"github.com/Nerzal/gocloak"
@@ -20,6 +19,10 @@ func NewHttpError(message string, errorCode int) *HttpError {
 	return &HttpError{Message: message, ErrorCode: errorCode}
 }
 
+func NewHttpBadRequestError(statusCode string, err error) *HttpError {
+	return &HttpError{Message: err.Error(), ErrorCode: fiber.StatusBadRequest, InternalError: &err, StatusCode: &statusCode}
+}
+
 func NewHttpInternalError(statusCode string, err error) *HttpError {
 	return &HttpError{Message: "Terjadi kesalahan", ErrorCode: fiber.StatusInternalServerError, InternalError: &err, StatusCode: &statusCode}
 }
@@ -28,37 +31,58 @@ func (e *HttpError) Error() string {
 	return e.Message
 }
 
-func (server *WebServer) Error(ctx *fiber.Ctx, err error) error {
+func (*WebServer) Error(ctx *fiber.Ctx, err error) error {
+	return FinalError(ctx, err)
+}
+
+func FinalError(ctx *fiber.Ctx, err error) error {
 	var httpErr *HttpError
 	if errors.As(err, &httpErr) {
 
-		if httpErr.InternalError != nil {
-			// TODO: Connect sentry on this line
-			log.Println(*httpErr.StatusCode)
-			log.Println(*httpErr.InternalError)
-
-		}
-
-		return ctx.Status(httpErr.ErrorCode).JSON(err.Error())
+		return ctx.Status(httpErr.ErrorCode).JSON(fiber.Map{
+			"message":    httpErr.Message,
+			"code":       httpErr.ErrorCode,
+			"statusCode": httpErr.StatusCode,
+		})
 	}
 
-	var apiErr *gocloak.APIError
-	if errors.As(err, &apiErr) {
+	if fiberError, ok := err.(*fiber.Error); ok {
+		if fiberError.Code < 500 {
+			return ctx.Status(fiberError.Code).JSON(fiber.Map{
+				"message":    fiberError.Message,
+				"code":       fiberError.Code,
+				"statusCode": "INTERNAL_HTTP_ERROR",
+			})
+		}
+	}
+
+	var goCloakErr *gocloak.APIError
+	if errors.As(err, &goCloakErr) {
 
 		// parse something like '401 Unauthorized: invalid_grant: Invalid user credentials'
-		parts := strings.Split(apiErr.Message, ":")
+		parts := strings.Split(goCloakErr.Message, ":")
 		message := strings.TrimSpace(parts[len(parts)-1])
-		errorCode := apiErr.Code
+		errorCode := goCloakErr.Code
 
 		if errorCode == 0 {
 			// TODO: Connect sentry on this line
 			errorCode = 500
 		}
 
-		return ctx.Status(errorCode).SendString(message)
+		return ctx.Status(errorCode).JSON(fiber.Map{
+
+			"message":    message,
+			"code":       errorCode,
+			"statusCode": "AUTH_ERROR",
+		})
 	}
 
-	return ctx.Status(500).SendString(err.Error())
+	return ctx.Status(500).JSON(fiber.Map{
+		"message":    "Terjadi kesalahan",
+		"code":       500,
+		"statusCode": "INTERNAL_SERVER_ERROR",
+	})
+
 }
 
 func (server *WebServer) Response(ctx *fiber.Ctx, response interface{}, successCode int, err error) error {
