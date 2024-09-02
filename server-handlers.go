@@ -23,6 +23,14 @@ func NewHttpBadRequestError(statusCode string, err error) *HttpError {
 	return &HttpError{Message: err.Error(), ErrorCode: fiber.StatusBadRequest, InternalError: &err, StatusCode: &statusCode}
 }
 
+func NewHttpForbiddenError(statusCode string, err error) *HttpError {
+	return &HttpError{Message: err.Error(), ErrorCode: fiber.StatusForbidden, InternalError: &err, StatusCode: &statusCode}
+}
+
+func NewHttpNotFoundError(statusCode string, err error) *HttpError {
+	return &HttpError{Message: err.Error(), ErrorCode: fiber.StatusNotFound, InternalError: &err, StatusCode: &statusCode}
+}
+
 func NewHttpInternalError(statusCode string, err error) *HttpError {
 	return &HttpError{Message: "Terjadi kesalahan", ErrorCode: fiber.StatusInternalServerError, InternalError: &err, StatusCode: &statusCode}
 }
