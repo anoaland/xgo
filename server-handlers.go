@@ -9,10 +9,10 @@ import (
 )
 
 type HttpError struct {
-	ErrorCode     int
-	Message       string
-	StatusCode    *string
-	InternalError *error
+	ErrorCode     int     `json:"code"`
+	Message       string  `json:"message"`
+	StatusCode    *string `json:"statusCode"`
+	InternalError *error  `json:"internalError"`
 }
 
 func NewHttpError(message string, errorCode int) *HttpError {
