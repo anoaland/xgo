@@ -31,7 +31,7 @@ func findEnvFiles(level int) []string {
 	var envs []string
 
 	// Iterate through directories up to the specified level
-	for i := 0; i <= level; i++ {
+	for i := level; i >= 0; i-- {
 		// Construct the path to the .env file
 		envPath := filepath.Join(repeat("../", i), ".env")
 		// Check if the .env file exists
