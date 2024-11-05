@@ -26,6 +26,20 @@ func LoadEnv(level int) {
 	}
 }
 
+func LoadEnvIfExists(level int) {
+	envs := findEnvFiles(level)
+
+	if len(envs) == 0 {
+		log.Println("Could not resolve .env file")
+		return
+	}
+
+	err := godotenv.Overload(envs...)
+	if err != nil {
+		log.Println("Warning: error loading .env file", err)
+	}
+}
+
 // findEnvFiles finds .env files recursively up to the specified level.
 func findEnvFiles(level int) []string {
 	var envs []string
