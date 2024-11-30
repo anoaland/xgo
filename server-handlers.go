@@ -11,6 +11,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func NewPartError(part string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewError(part, err)
+}
+
 func NewHttpError(message string, errorCode int) *xgoErrors.XgoError {
 	return xgoErrors.NewHttpError("", errors.New(message), errorCode, 1)
 }
