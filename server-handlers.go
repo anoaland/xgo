@@ -12,23 +12,23 @@ import (
 )
 
 func NewHttpError(message string, errorCode int) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", errors.New(message), errorCode)
+	return xgoErrors.NewHttpError("", errors.New(message), errorCode, 1)
 }
 
 func NewHttpBadRequestError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", err, fiber.StatusBadRequest)
+	return xgoErrors.NewHttpError("", err, fiber.StatusBadRequest, 1)
 }
 
 func NewHttpForbiddenError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", err, fiber.StatusForbidden)
+	return xgoErrors.NewHttpError("", err, fiber.StatusForbidden, 1)
 }
 
 func NewHttpNotFoundError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", err, fiber.StatusNotFound)
+	return xgoErrors.NewHttpError("", err, fiber.StatusNotFound, 1)
 }
 
 func NewHttpInternalError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", err, fiber.StatusInternalServerError)
+	return xgoErrors.NewHttpError("", err, fiber.StatusInternalServerError, 1)
 }
 
 func (s *WebServer) Error(ctx *fiber.Ctx, err error) error {
@@ -36,29 +36,16 @@ func (s *WebServer) Error(ctx *fiber.Ctx, err error) error {
 }
 
 func (s *WebServer) FinalError(ctx *fiber.Ctx, err error) error {
-	_, file, line, _ := runtime.Caller(1)
-	if s.errorHandler != nil {
-		fn := *s.errorHandler
-		fn(WebTraceError{
-			Error: err,
-			File:  file,
-			Line:  line,
-			Stack: string(debug.Stack()),
-		})
-	}
 
-	var httpErr *xgoErrors.XgoError
-	if errors.As(err, &httpErr) {
-
-		return ctx.Status(httpErr.HttpErrorCode).JSON(fiber.Map{
-			"message":    httpErr.Message,
-			"code":       httpErr.HttpErrorCode,
-			"statusCode": httpErr.Part,
-		})
+	var xgoErr *xgoErrors.XgoError
+	if errors.As(err, &xgoErr) {
+		s.traceXgoError(xgoErr)
+		return xgoErr.AsFiberError(ctx)
 	}
 
 	if fiberError, ok := err.(*fiber.Error); ok {
 		if fiberError.Code < 500 {
+			s.traceError("FIBER", fiberError.Code, err)
 			return ctx.Status(fiberError.Code).JSON(fiber.Map{
 				"message":    fiberError.Message,
 				"code":       fiberError.Code,
@@ -80,20 +67,48 @@ func (s *WebServer) FinalError(ctx *fiber.Ctx, err error) error {
 			errorCode = 500
 		}
 
+		s.traceError("KEYCLOAK", errorCode, err)
 		return ctx.Status(errorCode).JSON(fiber.Map{
-
 			"message":    message,
 			"code":       errorCode,
 			"statusCode": "AUTH_ERROR",
 		})
 	}
 
+	s.traceError("FATAL", 500, err)
 	return ctx.Status(500).JSON(fiber.Map{
 		"message":    "Terjadi kesalahan",
 		"code":       500,
 		"statusCode": "INTERNAL_SERVER_ERROR",
 	})
 
+}
+
+func (s *WebServer) traceError(part string, httpErrorCode int, err error) {
+	if s.errorHandler == nil {
+		return
+	}
+	fn := *s.errorHandler
+
+	_, file, line, _ := runtime.Caller(1)
+	fn(xgoErrors.XgoError{
+		IsFatal:       httpErrorCode >= 500,
+		Part:          part,
+		Err:           err,
+		Message:       err.Error(),
+		File:          file,
+		Line:          line,
+		HttpErrorCode: httpErrorCode,
+		Stack:         string(debug.Stack()),
+	})
+}
+
+func (s *WebServer) traceXgoError(err *xgoErrors.XgoError) {
+	if s.errorHandler == nil {
+		return
+	}
+	fn := *s.errorHandler
+	fn(*err)
 }
 
 func (server *WebServer) Response(ctx *fiber.Ctx, response interface{}, successCode int, err error) error {

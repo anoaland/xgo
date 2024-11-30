@@ -80,7 +80,7 @@ func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
 		if err == fiber.ErrUnauthorized {
 			return err
 		}
-		return errors.NewXgoError("WEB_AUTH_MANAGER__GetUserFromToken", err)
+		return errors.NewError("WEB_AUTH_MANAGER__GetUserFromToken", err)
 	}
 
 	ctx.Locals(USER_LOCAL_KEY, user)

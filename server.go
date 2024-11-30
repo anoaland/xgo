@@ -10,20 +10,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	auth "github.com/anoaland/xgo/auth"
+	xgoErrors "github.com/anoaland/xgo/errors"
 )
 
 type AuthManager interface {
 	GetCurrentUser(ctx *fiber.Ctx) interface{}
 }
 
-type WebTraceError struct {
-	Error error
-	Stack string `json:"stack,omitempty"` // Add this field
-	File  string `json:"file,omitempty"`  // Add this field
-	Line  int    `json:"line,omitempty"`  // Add this field
-}
-
-type WebServerErrorHandler = func(err WebTraceError)
+type WebServerErrorHandler = func(err xgoErrors.XgoError)
 
 type WebServer struct {
 	App          *fiber.App

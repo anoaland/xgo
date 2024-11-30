@@ -3,30 +3,50 @@ package errors
 import (
 	"fmt"
 	"runtime"
+	"runtime/debug"
 	"strings"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type XgoError struct {
 	Part          string
+	IsFatal       bool
 	Err           error
 	Message       string
 	File          string
 	Line          int
 	HttpErrorCode int
-	// stack   []Trace
+	Stack         string
+}
+
+func (e *XgoError) AsFiberError(ctx *fiber.Ctx) error {
+	if e.IsFatal {
+		return ctx.Status(500).JSON(fiber.Map{
+			"message":    "Terjadi kesalahan",
+			"code":       500,
+			"statusCode": "INTERNAL_SERVER_ERROR",
+		})
+	}
+
+	return ctx.Status(e.HttpErrorCode).JSON(fiber.Map{
+		"message":    e.Message,
+		"code":       e.HttpErrorCode,
+		"statusCode": e.Part,
+	})
 }
 
 // Deprecated: Use NewError instead
 func NewXgoError(part string, err error) *XgoError {
-	return NewHttpError(part, err, 500)
+	return NewHttpError(part, err, 500, 0)
 }
 
 func NewError(part string, err error) *XgoError {
-	return NewHttpError(part, err, 500)
+	return NewHttpError(part, err, 500, 0)
 }
 
-func NewHttpError(part string, err error, httpErrorCode int) *XgoError {
-	_, file, line, _ := runtime.Caller(1)
+func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *XgoError {
+	_, file, line, _ := runtime.Caller(callerSkip + 1)
 	msg := err.Error()
 	parts := []string{}
 
@@ -44,12 +64,18 @@ func NewHttpError(part string, err error, httpErrorCode int) *XgoError {
 		File:          file,
 		Line:          line,
 		HttpErrorCode: httpErrorCode,
-		// stack:   getStack(),
+		IsFatal:       httpErrorCode >= 500,
+		Stack:         string(debug.Stack()),
 	}
 }
 
 func (e *XgoError) Error() string {
-	return fmt.Sprintf("[%d | %s] %s | %s:%d", e.HttpErrorCode, e.Part, e.Message, e.File, e.Line)
+	identity := fmt.Sprintf("[%d]", e.HttpErrorCode)
+	if e.Part != "" {
+		identity = fmt.Sprintf("[%d | %s]", e.HttpErrorCode, e.Part)
+	}
+
+	return fmt.Sprintf("%s %s\r\n\t%s:%d", identity, e.Message, e.File, e.Line)
 }
 
 // see: https://mdcfrancis.medium.com/tracing-errors-in-go-using-custom-error-types-9aaf3bba1a64
