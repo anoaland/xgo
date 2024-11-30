@@ -2,37 +2,54 @@ package errors
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 )
 
 type XgoError struct {
-	part    string
-	err     error
-	message string
+	Part          string
+	Err           error
+	Message       string
+	File          string
+	Line          int
+	HttpErrorCode int
 	// stack   []Trace
 }
 
+// Deprecated: Use NewError instead
 func NewXgoError(part string, err error) *XgoError {
+	return NewHttpError(part, err, 500)
+}
+
+func NewError(part string, err error) *XgoError {
+	return NewHttpError(part, err, 500)
+}
+
+func NewHttpError(part string, err error, httpErrorCode int) *XgoError {
+	_, file, line, _ := runtime.Caller(1)
 	msg := err.Error()
 	parts := []string{}
 
 	if me, ok := err.(*XgoError); ok {
-		parts = append(parts, me.part)
-		msg = me.message
+		parts = append([]string{me.Part}, parts...)
+		msg = me.Message
 	}
 
 	parts = append(parts, part)
 
 	return &XgoError{
-		part:    strings.Join(parts, "\r\n"),
-		err:     err,
-		message: msg,
+		Part:          strings.Join(parts, " -> "),
+		Err:           err,
+		Message:       msg,
+		File:          file,
+		Line:          line,
+		HttpErrorCode: httpErrorCode,
 		// stack:   getStack(),
 	}
 }
 
 func (e *XgoError) Error() string {
-	return fmt.Sprintf("%s\r\n%s", e.part, e.message)
+	return fmt.Sprintf("[%d | %s] %s | %s:%d", e.HttpErrorCode, e.Part, e.Message, e.File, e.Line)
 }
 
 // see: https://mdcfrancis.medium.com/tracing-errors-in-go-using-custom-error-types-9aaf3bba1a64

@@ -7,38 +7,28 @@ import (
 	"strings"
 
 	"github.com/Nerzal/gocloak"
+	xgoErrors "github.com/anoaland/xgo/errors"
 	"github.com/gofiber/fiber/v2"
 )
 
-type HttpError struct {
-	ErrorCode     int     `json:"code"`
-	Message       string  `json:"message"`
-	StatusCode    *string `json:"statusCode"`
-	InternalError *error  `json:"internalError"`
+func NewHttpError(message string, errorCode int) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError("", errors.New(message), errorCode)
 }
 
-func NewHttpError(message string, errorCode int) *HttpError {
-	return &HttpError{Message: message, ErrorCode: errorCode}
+func NewHttpBadRequestError(statusCode string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError("", err, fiber.StatusBadRequest)
 }
 
-func NewHttpBadRequestError(statusCode string, err error) *HttpError {
-	return &HttpError{Message: err.Error(), ErrorCode: fiber.StatusBadRequest, InternalError: &err, StatusCode: &statusCode}
+func NewHttpForbiddenError(statusCode string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError("", err, fiber.StatusForbidden)
 }
 
-func NewHttpForbiddenError(statusCode string, err error) *HttpError {
-	return &HttpError{Message: err.Error(), ErrorCode: fiber.StatusForbidden, InternalError: &err, StatusCode: &statusCode}
+func NewHttpNotFoundError(statusCode string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError("", err, fiber.StatusNotFound)
 }
 
-func NewHttpNotFoundError(statusCode string, err error) *HttpError {
-	return &HttpError{Message: err.Error(), ErrorCode: fiber.StatusNotFound, InternalError: &err, StatusCode: &statusCode}
-}
-
-func NewHttpInternalError(statusCode string, err error) *HttpError {
-	return &HttpError{Message: "Terjadi kesalahan", ErrorCode: fiber.StatusInternalServerError, InternalError: &err, StatusCode: &statusCode}
-}
-
-func (e *HttpError) Error() string {
-	return e.Message
+func NewHttpInternalError(statusCode string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError("", err, fiber.StatusInternalServerError)
 }
 
 func (s *WebServer) Error(ctx *fiber.Ctx, err error) error {
@@ -57,13 +47,13 @@ func (s *WebServer) FinalError(ctx *fiber.Ctx, err error) error {
 		})
 	}
 
-	var httpErr *HttpError
+	var httpErr *xgoErrors.XgoError
 	if errors.As(err, &httpErr) {
 
-		return ctx.Status(httpErr.ErrorCode).JSON(fiber.Map{
+		return ctx.Status(httpErr.HttpErrorCode).JSON(fiber.Map{
 			"message":    httpErr.Message,
-			"code":       httpErr.ErrorCode,
-			"statusCode": httpErr.StatusCode,
+			"code":       httpErr.HttpErrorCode,
+			"statusCode": httpErr.Part,
 		})
 	}
 
