@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/pterm/pterm"
 )
 
 type XgoError struct {
@@ -18,6 +19,22 @@ type XgoError struct {
 	Line          int
 	HttpErrorCode int
 	Stack         string
+}
+
+func (err *XgoError) Print() {
+	logger := pterm.DefaultLogger.WithLevel(pterm.LogLevelTrace)
+	args := []any{
+		"fatal", err.IsFatal,
+		"code", err.HttpErrorCode,
+		"caller", pterm.Gray(fmt.Sprintf("%s:%d", err.File, err.Line)),
+	}
+
+	if err.Part != "" {
+		args = append([]any{"part", pterm.Yellow(err.Part)}, args...)
+
+	}
+
+	logger.Error(err.Message, logger.Args(args...))
 }
 
 func (e *XgoError) AsFiberError(ctx *fiber.Ctx) error {
@@ -38,11 +55,11 @@ func (e *XgoError) AsFiberError(ctx *fiber.Ctx) error {
 
 // Deprecated: Use NewError instead
 func NewXgoError(part string, err error) *XgoError {
-	return NewHttpError(part, err, 500, 0)
+	return NewHttpError(part, err, 500, 1)
 }
 
 func NewError(part string, err error) *XgoError {
-	return NewHttpError(part, err, 500, 0)
+	return NewHttpError(part, err, 500, 1)
 }
 
 func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *XgoError {
