@@ -36,6 +36,7 @@ require (
 	github.com/microsoft/go-mssqldb v1.6.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/pterm/pterm v0.12.80 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/zclconf/go-cty v1.14.1 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
