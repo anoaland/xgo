@@ -16,9 +16,19 @@ type AuthManager interface {
 	GetCurrentUser(ctx *fiber.Ctx) interface{}
 }
 
+type WebTraceError struct {
+	Error error
+	Stack string `json:"stack,omitempty"` // Add this field
+	File  string `json:"file,omitempty"`  // Add this field
+	Line  int    `json:"line,omitempty"`  // Add this field
+}
+
+type WebServerErrorHandler = func(err WebTraceError)
+
 type WebServer struct {
-	App  *fiber.App
-	Auth *auth.WebAuthManager
+	App          *fiber.App
+	Auth         *auth.WebAuthManager
+	errorHandler *WebServerErrorHandler
 }
 
 type XRouter struct {
@@ -50,6 +60,10 @@ func New(config ...fiber.Config) *WebServer {
 
 func (s *WebServer) UseAuth(client auth.WebAuthClient, bearerTokenConfig *auth.BearerTokenMiddlewareConfig) {
 	s.Auth = auth.NewWebAuthManager(client, bearerTokenConfig)
+}
+
+func (s *WebServer) UseErrorHandler(fn WebServerErrorHandler) {
+	s.errorHandler = &fn
 }
 
 func (s *WebServer) XGroup(prefix string) *XRouter {

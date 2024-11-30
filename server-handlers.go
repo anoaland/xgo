@@ -2,6 +2,8 @@ package xgo
 
 import (
 	"errors"
+	"runtime"
+	"runtime/debug"
 	"strings"
 
 	"github.com/Nerzal/gocloak"
@@ -39,11 +41,22 @@ func (e *HttpError) Error() string {
 	return e.Message
 }
 
-func (*WebServer) Error(ctx *fiber.Ctx, err error) error {
-	return FinalError(ctx, err)
+func (s *WebServer) Error(ctx *fiber.Ctx, err error) error {
+	return s.FinalError(ctx, err)
 }
 
-func FinalError(ctx *fiber.Ctx, err error) error {
+func (s *WebServer) FinalError(ctx *fiber.Ctx, err error) error {
+	_, file, line, _ := runtime.Caller(1)
+	if s.errorHandler != nil {
+		fn := *s.errorHandler
+		fn(WebTraceError{
+			Error: err,
+			File:  file,
+			Line:  line,
+			Stack: string(debug.Stack()),
+		})
+	}
+
 	var httpErr *HttpError
 	if errors.As(err, &httpErr) {
 
