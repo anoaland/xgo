@@ -94,7 +94,7 @@ func (s *WebServer) traceError(part string, httpErrorCode int, err error) {
 	}
 	fn := *s.errorHandler
 
-	_, file, line, _ := runtime.Caller(1)
+	_, file, line, _ := runtime.Caller(4)
 	fn(xgoErrors.XgoError{
 		IsFatal:       httpErrorCode >= 500,
 		Part:          part,
