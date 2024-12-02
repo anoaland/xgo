@@ -24,26 +24,13 @@ type XgoError struct {
 
 func (err *XgoError) Print() {
 	logger := pterm.DefaultLogger.WithLevel(pterm.LogLevelTrace)
-
-	var stacks any
-
-	if len(err.Callers) > 1 {
-		callers := make([]pterm.TreeNode, len(err.Callers))
-		for i, caller := range err.Callers {
-			callers[i] = pterm.TreeNode{Text: caller}
-		}
-		stacks = pterm.TreeNode{
-			Text:     "Callers",
-			Children: callers,
-		}
-	} else {
-		stacks = pterm.Gray(fmt.Sprintf("%s:%d", err.File, err.Line))
-	}
-
 	args := []any{
 		"fatal", err.IsFatal,
 		"code", err.HttpErrorCode,
-		"caller", stacks,
+	}
+
+	if len(err.Callers) == 1 {
+		args = append(args, []any{"caller", pterm.Gray(fmt.Sprintf("%s:%d", err.File, err.Line))})
 	}
 
 	if err.Part != "" {
@@ -51,6 +38,14 @@ func (err *XgoError) Print() {
 	}
 
 	logger.Error(err.Message, logger.Args(args...))
+
+	if len(err.Callers) > 1 {
+		callers := make([]pterm.BulletListItem, len(err.Callers))
+		for i, caller := range err.Callers {
+			callers[i] = pterm.BulletListItem{Text: pterm.Gray(caller), Level: 24}
+		}
+		pterm.DefaultBulletList.WithItems(callers).Render()
+	}
 }
 
 func (e *XgoError) AsFiberError(ctx *fiber.Ctx) error {
