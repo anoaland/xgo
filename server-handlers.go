@@ -12,7 +12,7 @@ import (
 )
 
 func NewPartError(part string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewError(part, err)
+	return xgoErrors.NewHttpError(part, err, 500, 1)
 }
 
 func NewHttpError(message string, errorCode int) *xgoErrors.XgoError {
@@ -36,10 +36,10 @@ func NewHttpInternalError(statusCode string, err error) *xgoErrors.XgoError {
 }
 
 func (s *WebServer) Error(ctx *fiber.Ctx, err error) error {
-	return s.FinalError(ctx, err)
+	return s.finalError(ctx, err)
 }
 
-func (s *WebServer) FinalError(ctx *fiber.Ctx, err error) error {
+func (s *WebServer) finalError(ctx *fiber.Ctx, err error) error {
 
 	var xgoErr *xgoErrors.XgoError
 	if errors.As(err, &xgoErr) {
@@ -117,7 +117,7 @@ func (s *WebServer) traceXgoError(err *xgoErrors.XgoError) {
 
 func (server *WebServer) Response(ctx *fiber.Ctx, response interface{}, successCode int, err error) error {
 	if err != nil {
-		return server.Error(ctx, err)
+		return server.finalError(ctx, err, 4)
 	}
 
 	return ctx.Status(successCode).JSON(response)
