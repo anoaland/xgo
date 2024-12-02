@@ -19,19 +19,35 @@ type XgoError struct {
 	Line          int
 	HttpErrorCode int
 	Stack         string
+	Callers       []string
 }
 
 func (err *XgoError) Print() {
 	logger := pterm.DefaultLogger.WithLevel(pterm.LogLevelTrace)
+
+	var stacks any
+
+	if len(err.Callers) > 1 {
+		callers := make([]pterm.TreeNode, len(err.Callers))
+		for i, caller := range err.Callers {
+			callers[i] = pterm.TreeNode{Text: caller}
+		}
+		stacks = pterm.TreeNode{
+			Text:     "Callers",
+			Children: callers,
+		}
+	} else {
+		stacks = pterm.Gray(fmt.Sprintf("%s:%d", err.File, err.Line))
+	}
+
 	args := []any{
 		"fatal", err.IsFatal,
 		"code", err.HttpErrorCode,
-		"caller", pterm.Gray(fmt.Sprintf("%s:%d", err.File, err.Line)),
+		"caller", stacks,
 	}
 
 	if err.Part != "" {
 		args = append([]any{"part", pterm.Yellow(err.Part)}, args...)
-
 	}
 
 	logger.Error(err.Message, logger.Args(args...))
@@ -66,9 +82,11 @@ func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *Xg
 	_, file, line, _ := runtime.Caller(callerSkip + 1)
 	msg := err.Error()
 	parts := []string{}
+	callers := []string{fmt.Sprintf("%s:%d", file, line)}
 
 	if me, ok := err.(*XgoError); ok {
 		parts = append([]string{me.Part}, parts...)
+		callers = append(me.Callers, callers...)
 		msg = me.Message
 	}
 
@@ -76,6 +94,7 @@ func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *Xg
 
 	return &XgoError{
 		Part:          strings.Join(parts, " -> "),
+		Callers:       callers,
 		Err:           err,
 		Message:       msg,
 		File:          file,
