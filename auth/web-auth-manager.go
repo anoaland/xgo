@@ -72,7 +72,10 @@ func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
 	//
 
 	if token == nil {
-		return ctx.SendStatus(401)
+		return ctx.Status(401).JSON(map[string]any{
+			"message": "Unauthorized",
+			"code":    401,
+		})
 	}
 
 	user, err := m.client.GetUserFromToken(*token)
@@ -85,7 +88,10 @@ func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
 
 	ctx.Locals(USER_LOCAL_KEY, user)
 	if user == nil {
-		return ctx.SendStatus(401)
+		return ctx.Status(401).JSON(map[string]any{
+			"message": "Unauthorized",
+			"code":    401,
+		})
 	}
 
 	return ctx.Next()
