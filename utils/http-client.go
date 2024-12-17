@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	xgoErrors "github.com/anoaland/xgo/errors"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -82,7 +83,7 @@ func (hc *HttpClient) Send() (interface{}, error) {
 			fmt.Println(fmt.Sprintf("❌ HTTP ERROR REQUEST PAYLOAD  %s", string(hc.Payload)))
 		}
 		fmt.Println(fmt.Sprintf("❌ HTTP ERROR RESPONSE [%d] %s", respCode, string(respBody)))
-		err := errors.New(string(respBody))
+		err := xgoErrors.NewHttpError("HTTP_CLIENT", errors.New(string(respBody)), respCode, 2)
 		return nil, err
 	}
 
