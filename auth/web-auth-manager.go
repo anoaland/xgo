@@ -72,26 +72,21 @@ func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
 	//
 
 	if token == nil {
-		return ctx.Status(401).JSON(map[string]any{
-			"message": "Unauthorized",
-			"code":    401,
-		})
+		return errors.NewHttpError("WEB_AUTH_MANAGER__TOKEN_EMPTY", nil, fiber.ErrUnauthorized.Code, fiber.StatusUnauthorized)
 	}
 
 	user, err := m.client.GetUserFromToken(*token)
 	if err != nil {
 		if err == fiber.ErrUnauthorized {
-			return err
+			return errors.NewHttpError("WEB_AUTH_MANAGER__Unauthorized_BY_CLIENT", err, fiber.ErrUnauthorized.Code, fiber.StatusUnauthorized)
 		}
+
 		return errors.NewError("WEB_AUTH_MANAGER__GetUserFromToken", err)
 	}
 
 	ctx.Locals(USER_LOCAL_KEY, user)
 	if user == nil {
-		return ctx.Status(401).JSON(map[string]any{
-			"message": "Unauthorized",
-			"code":    401,
-		})
+		return errors.NewHttpError("WEB_AUTH_MANAGER__User_EMPTY", err, fiber.ErrUnauthorized.Code, fiber.StatusUnauthorized)
 	}
 
 	return ctx.Next()
