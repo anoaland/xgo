@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"runtime/debug"
@@ -75,6 +76,11 @@ func NewError(part string, err error) *XgoError {
 
 func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *XgoError {
 	_, file, line, _ := runtime.Caller(callerSkip + 1)
+
+	if err == nil {
+		err = errors.New("unspecified")
+	}
+
 	msg := err.Error()
 	parts := []string{}
 	callers := []string{fmt.Sprintf("%s:%d", file, line)}
