@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/anoaland/xgo"
 	xgoErrors "github.com/anoaland/xgo/errors"
 	"github.com/gofiber/fiber/v2"
 )
@@ -74,29 +75,42 @@ func (hc *HttpClient) Send() (interface{}, error) {
 		return nil, err
 	}
 
-	// check response error
-	var respJson interface{}
 	if respCode >= 300 {
-		respJson = hc.ResponseError
-		json.Unmarshal(respBody, &respJson)
-		if hc.Payload != nil {
-			fmt.Println(fmt.Sprintf("❌ HTTP ERROR REQUEST PAYLOAD  %s", string(hc.Payload)))
-		}
-		fmt.Println(fmt.Sprintf("❌ HTTP ERROR RESPONSE [%d] %s", respCode, string(respBody)))
-		err := xgoErrors.NewHttpError("HTTP_CLIENT", errors.New(string(respBody)), respCode, 2)
-		return nil, err
-	}
+		resError, err := resolveResponse(hc.ResponseError, respBody)
 
-	// format response
-	respJson = hc.ResponseSuccess
-	json.Unmarshal(respBody, &respJson)
+		if err != nil {
+			return nil, xgo.NewHttpInternalError("❌ FAILED_TO_PARSE_RESPONSE_ERROR", err)
+		}
+
+		if hc.Payload != nil {
+			fmt.Printf("❌ HTTP ERROR REQUEST PAYLOAD  %s", string(hc.Payload))
+		}
+		fmt.Printf("❌ HTTP ERROR RESPONSE [%d] %s", respCode, string(respBody))
+		err = xgoErrors.NewHttpError("HTTP_CLIENT", errors.New(string(respBody)), respCode, 2)
+		return resError, err
+	}
 
 	// log response
 	if hc.LogResponse {
-		fmt.Println(fmt.Sprintf("response : [%d] %s", respCode, respBody))
+		fmt.Printf("response : [%d] %s", respCode, respBody)
 	}
 
-	return respJson, nil
+	return resolveResponse(hc.ResponseSuccess, respBody)
+
+}
+
+func resolveResponse(responseType interface{}, respBody []byte) (interface{}, error) {
+	if responseType != nil {
+
+		err := json.Unmarshal(respBody, &responseType)
+		if err != nil {
+			return nil, err
+		}
+
+		return responseType, nil
+
+	}
+	return respBody, nil
 }
 
 func extractResponseErrors(errors []error) string {
