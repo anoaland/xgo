@@ -31,7 +31,7 @@ func (err *XgoError) Print() {
 	}
 
 	if len(err.Callers) == 1 {
-		args = append(args, []any{"caller", pterm.Gray(fmt.Sprintf("%s:%d", err.File, err.Line))})
+		args = append(args, "caller", pterm.Gray(fmt.Sprintf("%s:%d", err.File, err.Line)))
 	}
 
 	if err.Part != "" {
