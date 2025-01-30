@@ -66,8 +66,18 @@ func AsXgoError(err error) *xgoErrors.XgoError {
 			errorCode = 500
 		}
 
-		return xgoErrors.NewHttpError("AUTH_ERROR", errors.New(message), errorCode, 1)
+		return &xgoErrors.XgoError{
+			Message:       message,
+			IsFatal:       true,
+			HttpErrorCode: errorCode,
+			Part:          "AUTH_ERROR",
+		}
 	}
 
-	return xgoErrors.NewError("GENERAL", err)
+	return &xgoErrors.XgoError{
+		Message:       err.Error(),
+		IsFatal:       true,
+		HttpErrorCode: 500,
+		Part:          "UNSPECIFIED",
+	}
 }

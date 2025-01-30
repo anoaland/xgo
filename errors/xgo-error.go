@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"runtime/debug"
 	"strings"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/pterm/pterm"
 )
 
@@ -20,6 +20,63 @@ type XgoError struct {
 	HttpErrorCode int
 	Stack         string
 	Callers       []string
+}
+
+func NewError(part string, err error) *XgoError {
+	return NewHttpError(part, err, 500, 1)
+}
+
+func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *XgoError {
+	_, file, line, _ := runtime.Caller(callerSkip + 1)
+
+	if err == nil {
+		err = errors.New("unspecified")
+	}
+
+	msg := err.Error()
+	parts := []string{}
+	callers := []string{fmt.Sprintf("%s:%d", file, line)}
+
+	if me, ok := err.(*XgoError); ok {
+		parts = append([]string{me.Part}, parts...)
+		callers = append(me.Callers, callers...)
+		msg = me.Message
+	}
+
+	parts = append(parts, part)
+
+	var stack []string
+	pcs := make([]uintptr, 32)
+	n := runtime.Callers(1, pcs)
+	frames := runtime.CallersFrames(pcs[:n])
+	for {
+		frame, more := frames.Next()
+		if !more {
+			break
+		}
+		stack = append(stack, fmt.Sprintf("%s:%d %s\n", frame.File, frame.Line, frame.Function))
+	}
+
+	return &XgoError{
+		Part:          strings.Join(parts, " -> "),
+		Callers:       callers,
+		Err:           err,
+		Message:       msg,
+		File:          file,
+		Line:          line,
+		HttpErrorCode: httpErrorCode,
+		IsFatal:       httpErrorCode >= 500,
+		Stack:         strings.Join(stack, "\n"),
+	}
+}
+
+func (e *XgoError) Error() string {
+	identity := fmt.Sprintf("[%d]", e.HttpErrorCode)
+	if e.Part != "" {
+		identity = fmt.Sprintf("[%d | %s]", e.HttpErrorCode, e.Part)
+	}
+
+	return fmt.Sprintf("%s %s\r\n\t%s:%d", identity, e.Message, e.File, e.Line)
 }
 
 func (err *XgoError) Print() {
@@ -48,49 +105,16 @@ func (err *XgoError) Print() {
 	}
 }
 
-func NewError(part string, err error) *XgoError {
-	return NewHttpError(part, err, 500, 1)
-}
-
-func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *XgoError {
-	_, file, line, _ := runtime.Caller(callerSkip + 1)
-
-	if err == nil {
-		err = errors.New("unspecified")
+func (err *XgoError) FiberJsonResponse(ctx fiber.Ctx, fatalErrorMessage string) error {
+	message := err.Message
+	if err.IsFatal {
+		message = fatalErrorMessage
 	}
 
-	msg := err.Error()
-	parts := []string{}
-	callers := []string{fmt.Sprintf("%s:%d", file, line)}
-
-	if me, ok := err.(*XgoError); ok {
-		parts = append([]string{me.Part}, parts...)
-		callers = append(me.Callers, callers...)
-		msg = me.Message
-	}
-
-	parts = append(parts, part)
-
-	return &XgoError{
-		Part:          strings.Join(parts, " -> "),
-		Callers:       callers,
-		Err:           err,
-		Message:       msg,
-		File:          file,
-		Line:          line,
-		HttpErrorCode: httpErrorCode,
-		IsFatal:       httpErrorCode >= 500,
-		Stack:         string(debug.Stack()),
-	}
-}
-
-func (e *XgoError) Error() string {
-	identity := fmt.Sprintf("[%d]", e.HttpErrorCode)
-	if e.Part != "" {
-		identity = fmt.Sprintf("[%d | %s]", e.HttpErrorCode, e.Part)
-	}
-
-	return fmt.Sprintf("%s %s\r\n\t%s:%d", identity, e.Message, e.File, e.Line)
+	return ctx.Status(err.HttpErrorCode).JSON(fiber.Map{
+		"message": message,
+		"code":    err.HttpErrorCode,
+	})
 }
 
 // see: https://mdcfrancis.medium.com/tracing-errors-in-go-using-custom-error-types-9aaf3bba1a64
