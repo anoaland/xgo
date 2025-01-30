@@ -105,7 +105,7 @@ func (err *XgoError) Print() {
 	}
 }
 
-func (err *XgoError) FiberJsonResponse(ctx fiber.Ctx, fatalErrorMessage string) error {
+func (err *XgoError) FiberJsonResponse(ctx *fiber.Ctx, fatalErrorMessage string) error {
 	message := err.Message
 	if err.IsFatal {
 		message = fatalErrorMessage
