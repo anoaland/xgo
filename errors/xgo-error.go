@@ -7,7 +7,6 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/pterm/pterm"
 )
 
@@ -47,27 +46,6 @@ func (err *XgoError) Print() {
 		}
 		pterm.DefaultBulletList.WithItems(callers).Render()
 	}
-}
-
-func (e *XgoError) AsFiberError(ctx *fiber.Ctx) error {
-	if e.IsFatal {
-		return ctx.Status(500).JSON(fiber.Map{
-			"message":    "Terjadi kesalahan",
-			"code":       500,
-			"statusCode": "INTERNAL_SERVER_ERROR",
-		})
-	}
-
-	return ctx.Status(e.HttpErrorCode).JSON(fiber.Map{
-		"message":    e.Message,
-		"code":       e.HttpErrorCode,
-		"statusCode": e.Part,
-	})
-}
-
-// Deprecated: Use NewError instead
-func NewXgoError(part string, err error) *XgoError {
-	return NewHttpError(part, err, 500, 1)
 }
 
 func NewError(part string, err error) *XgoError {

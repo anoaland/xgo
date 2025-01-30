@@ -10,19 +10,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	auth "github.com/anoaland/xgo/auth"
-	xgoErrors "github.com/anoaland/xgo/errors"
 )
 
 type AuthManager interface {
 	GetCurrentUser(ctx *fiber.Ctx) interface{}
 }
 
-type WebServerErrorHandler = func(err xgoErrors.XgoError)
+// type WebServerErrorHandler = func(err xgoErrors.XgoError)
 
 type WebServer struct {
-	App          *fiber.App
-	Auth         *auth.WebAuthManager
-	errorHandler *WebServerErrorHandler
+	App  *fiber.App
+	Auth *auth.WebAuthManager
+	// errorHandler *WebServerErrorHandler
 }
 
 type XRouter struct {
@@ -56,9 +55,9 @@ func (s *WebServer) UseAuth(client auth.WebAuthClient, bearerTokenConfig *auth.B
 	s.Auth = auth.NewWebAuthManager(client, bearerTokenConfig)
 }
 
-func (s *WebServer) UseErrorHandler(fn WebServerErrorHandler) {
-	s.errorHandler = &fn
-}
+// func (s *WebServer) UseErrorHandler(fn WebServerErrorHandler) {
+// 	s.errorHandler = &fn
+// }
 
 func (s *WebServer) XGroup(prefix string) *XRouter {
 	return &XRouter{
