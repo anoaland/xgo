@@ -39,3 +39,28 @@ func Log(message string, args ...any) {
 	logger.ShowCaller = true
 	logger.Debug(message, logger.ArgsFromMap(vargs))
 }
+
+type JsonWriter struct {
+	Message string
+}
+
+func (w JsonWriter) Write(p []byte) (int, error) {
+	var obj any
+	if err := json.Unmarshal(p, &obj); err != nil {
+		return 0, err
+	}
+
+	jsonBytes, err := json.MarshalIndent(obj, "", "  ")
+	if err != nil {
+		return 0, err
+	}
+	jsonText := string(pretty.Color(jsonBytes, nil))
+
+	totalLen := len(p) + 1
+	if w.Message != "" {
+		pterm.Println(w.Message)
+		totalLen += len(w.Message) + 1
+	}
+	pterm.Println(jsonText)
+	return totalLen, nil
+}
