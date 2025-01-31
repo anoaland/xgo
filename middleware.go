@@ -108,8 +108,8 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 	}
 
 	server.App.Use(startTimeHandler)
-	server.App.Use(panicRecoverHandler)
 	server.App.Use(errorHandler)
+	server.App.Use(panicRecoverHandler)
 }
 
 func defaultErrorWriter() io.Writer {
