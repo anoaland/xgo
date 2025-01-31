@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/anoaland/xgo"
 	xgoErrors "github.com/anoaland/xgo/errors"
 	"github.com/gofiber/fiber/v2"
 )
@@ -79,7 +78,7 @@ func (hc *HttpClient) Send() (interface{}, error) {
 		resError, err := resolveResponse(hc.ResponseError, respBody)
 
 		if err != nil {
-			return nil, xgo.NewHttpInternalError("❌ FAILED_TO_PARSE_RESPONSE_ERROR", err)
+			return nil, xgoErrors.NewHttpError("❌ FAILED_TO_PARSE_RESPONSE_ERROR", err, 500, 2)
 		}
 
 		if hc.Payload != nil {
