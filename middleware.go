@@ -13,8 +13,8 @@ import (
 )
 
 type UseErrorHandlerConfig struct {
-	writer *io.Writer
-	logger *zerolog.Logger
+	Writer *io.Writer
+	Logger *zerolog.Logger
 }
 
 // UseErrorHandler is a middleware function that provides error handling for a WebServer.
@@ -31,10 +31,10 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 	if len(config) == 0 {
 		logger = zerolog.New(os.Stderr)
 	} else {
-		if config[0].logger != nil {
-			logger = *config[0].logger
+		if config[0].Logger != nil {
+			logger = *config[0].Logger
 		} else {
-			logger = zerolog.New(*config[0].writer)
+			logger = zerolog.New(*config[0].Writer)
 		}
 	}
 

@@ -40,7 +40,7 @@ func (server *WebServer) Response(ctx *fiber.Ctx, response interface{}, successC
 }
 
 type DefaultErrorHandlerConfig struct {
-	fatalErrorMessage string
+	FatalErrorMessage string
 }
 
 // DefaultErrorHandler returns a fiber.ErrorHandler that handles errors by converting them
@@ -70,12 +70,12 @@ func DefaultErrorHandler(config ...DefaultErrorHandlerConfig) fiber.ErrorHandler
 		cfg = DefaultErrorHandlerConfig{}
 	}
 
-	if cfg.fatalErrorMessage == "" {
-		cfg.fatalErrorMessage = "Something went wrong"
+	if cfg.FatalErrorMessage == "" {
+		cfg.FatalErrorMessage = "Something went wrong"
 	}
 
 	return func(ctx *fiber.Ctx, err error) error {
 		xgoError := AsXgoError(err)
-		return xgoError.FiberJsonResponse(ctx, cfg.fatalErrorMessage)
+		return xgoError.FiberJsonResponse(ctx, cfg.FatalErrorMessage)
 	}
 }
