@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/anoaland/xgo/utils"
@@ -97,10 +98,13 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 			arr.Str(st)
 		}
 		evt.Array("stack", arr)
-
 		evt.Send()
 
-		return nil
+		if xgoError.Stack == "" {
+			xgoError.Stack = strings.Join(stack, "\n")
+		}
+
+		return xgoError
 	}
 
 	server.App.Use(startTimeHandler)
