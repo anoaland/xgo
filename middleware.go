@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/anoaland/xgo/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/pterm/pterm"
@@ -14,7 +15,7 @@ import (
 )
 
 type UseErrorHandlerConfig struct {
-	Writer *io.Writer
+	Writer io.Writer
 	Logger *zerolog.Logger
 }
 
@@ -35,9 +36,12 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 		if config[0].Logger != nil {
 			logger = *config[0].Logger
 		} else if config[0].Writer != nil {
-			logger = zerolog.New(*config[0].Writer)
+			logger = zerolog.New(config[0].Writer)
 		} else {
-			logger = zerolog.New(pterm.Error.Writer)
+			errorJsonWritter := utils.JsonWriter{
+				Message: pterm.BgRed.Sprint(" ERROR "),
+			}
+			logger = zerolog.New(errorJsonWritter)
 		}
 	}
 
