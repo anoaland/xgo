@@ -18,19 +18,19 @@ func NewHttpError(message string, errorCode int) *xgoErrors.XgoError {
 }
 
 func NewHttpBadRequestError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", err, fiber.StatusBadRequest, 1)
+	return xgoErrors.NewHttpError(statusCode, err, fiber.StatusBadRequest, 1)
 }
 
 func NewHttpForbiddenError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", err, fiber.StatusForbidden, 1)
+	return xgoErrors.NewHttpError(statusCode, err, fiber.StatusForbidden, 1)
 }
 
 func NewHttpNotFoundError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", err, fiber.StatusNotFound, 1)
+	return xgoErrors.NewHttpError(statusCode, err, fiber.StatusNotFound, 1)
 }
 
 func NewHttpInternalError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", err, fiber.StatusInternalServerError, 1)
+	return xgoErrors.NewHttpError(statusCode, err, fiber.StatusInternalServerError, 1)
 }
 
 // AsXgoError converts a given error into an XgoError. It attempts to match the error
