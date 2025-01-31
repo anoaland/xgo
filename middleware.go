@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/pterm/pterm"
 	"github.com/rs/zerolog"
 )
 
@@ -33,8 +34,10 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 	} else {
 		if config[0].Logger != nil {
 			logger = *config[0].Logger
-		} else {
+		} else if config[0].Writer != nil {
 			logger = zerolog.New(*config[0].Writer)
+		} else {
+			logger = zerolog.New(pterm.Error.Writer)
 		}
 	}
 
