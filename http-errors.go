@@ -9,28 +9,20 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewPartError(part string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError(part, err, 500, 1)
+func NewHttpBadRequestError(part string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError(part, err, fiber.StatusBadRequest, 1)
 }
 
-func NewHttpError(message string, errorCode int) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError("", errors.New(message), errorCode, 1)
+func NewHttpForbiddenError(part string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError(part, err, fiber.StatusForbidden, 1)
 }
 
-func NewHttpBadRequestError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError(statusCode, err, fiber.StatusBadRequest, 1)
+func NewHttpNotFoundError(part string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError(part, err, fiber.StatusNotFound, 1)
 }
 
-func NewHttpForbiddenError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError(statusCode, err, fiber.StatusForbidden, 1)
-}
-
-func NewHttpNotFoundError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError(statusCode, err, fiber.StatusNotFound, 1)
-}
-
-func NewHttpInternalError(statusCode string, err error) *xgoErrors.XgoError {
-	return xgoErrors.NewHttpError(statusCode, err, fiber.StatusInternalServerError, 1)
+func NewHttpInternalError(part string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError(part, err, fiber.StatusInternalServerError, 1)
 }
 
 // AsXgoError converts a given error into an XgoError. It attempts to match the error
