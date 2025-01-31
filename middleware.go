@@ -3,7 +3,6 @@ package xgo
 import (
 	"fmt"
 	"io"
-	"os"
 	"runtime"
 	"time"
 
@@ -31,17 +30,14 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 	)
 
 	if len(config) == 0 {
-		logger = zerolog.New(os.Stderr)
+		logger = zerolog.New(defaultErrorWriter())
 	} else {
 		if config[0].Logger != nil {
 			logger = *config[0].Logger
 		} else if config[0].Writer != nil {
 			logger = zerolog.New(config[0].Writer)
 		} else {
-			errorJsonWritter := utils.JsonWriter{
-				Message: pterm.BgRed.Sprint(" ERROR "),
-			}
-			logger = zerolog.New(errorJsonWritter)
+			logger = zerolog.New(defaultErrorWriter())
 		}
 	}
 
@@ -110,4 +106,10 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 	server.App.Use(startTimeHandler)
 	server.App.Use(panicRecoverHandler)
 	server.App.Use(errorHandler)
+}
+
+func defaultErrorWriter() io.Writer {
+	return utils.JsonWriter{
+		Message: pterm.BgRed.Sprint(" ERROR "),
+	}
 }
