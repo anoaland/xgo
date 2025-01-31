@@ -17,6 +17,10 @@ func NewHttpForbiddenError(part string, err error) *xgoErrors.XgoError {
 	return xgoErrors.NewHttpError(part, err, fiber.StatusForbidden, 1)
 }
 
+func NewHttpUnauthorizedError(part string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError(part, err, fiber.StatusUnauthorized, 1)
+}
+
 func NewHttpNotFoundError(part string, err error) *xgoErrors.XgoError {
 	return xgoErrors.NewHttpError(part, err, fiber.StatusNotFound, 1)
 }
