@@ -4,34 +4,23 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// func (s *WebServer) traceError(part string, httpErrorCode int, err error) {
-// 	if s.errorHandler == nil {
-// 		return
-// 	}
-// 	fn := *s.errorHandler
+// Deprecated: Use Response() function directly instead.
+func (server *WebServer) Response(ctx *fiber.Ctx, response any, successCode int, err error) error {
+	return Response(ctx, response, successCode, err)
+}
 
-// 	_, file, line, _ := runtime.Caller(4)
-// 	fn(xgoErrors.XgoError{
-// 		IsFatal:       httpErrorCode >= 500,
-// 		Part:          part,
-// 		Err:           err,
-// 		Message:       err.Error(),
-// 		File:          file,
-// 		Line:          line,
-// 		HttpErrorCode: httpErrorCode,
-// 		Stack:         string(debug.Stack()),
-// 	})
-// }
-
-// func (s *WebServer) traceXgoError(err *xgoErrors.XgoError) {
-// 	if s.errorHandler == nil {
-// 		return
-// 	}
-// 	fn := *s.errorHandler
-// 	fn(*err)
-// }
-
-func (server *WebServer) Response(ctx *fiber.Ctx, response interface{}, successCode int, err error) error {
+// Response sends a JSON response with the given success code if there is no error.
+// If an error is provided, it returns the error instead.
+//
+// Parameters:
+//   - ctx: The Fiber context to send the response to.
+//   - response: The response data to be sent as JSON.
+//   - successCode: The HTTP status code to be used for the response if there is no error.
+//   - err: An error that, if not nil, will be returned instead of sending the response.
+//
+// Returns:
+//   - error: The provided error if it is not nil, otherwise nil.
+func Response(ctx *fiber.Ctx, response any, successCode int, err error) error {
 	if err != nil {
 		return err
 	}
