@@ -13,7 +13,6 @@ import (
 type XgoError struct {
 	Part          string
 	IsFatal       bool
-	Err           error
 	Message       string
 	File          string
 	Line          int
@@ -60,7 +59,6 @@ func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *Xg
 	return &XgoError{
 		Part:          strings.Join(parts, " -> "),
 		Callers:       callers,
-		Err:           err,
 		Message:       msg,
 		File:          file,
 		Line:          line,
