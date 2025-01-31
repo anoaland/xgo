@@ -44,7 +44,18 @@ func (xr XRouter) XGroup(prefix string) *XRouter {
 }
 
 func New(config ...fiber.Config) *WebServer {
-	app := fiber.New(config...)
+	var appConfig fiber.Config
+	if len(config) > 0 {
+		appConfig = config[0]
+	} else {
+		appConfig = fiber.Config{}
+	}
+
+	if appConfig.ErrorHandler == nil {
+		appConfig.ErrorHandler = DefaultErrorHandler()
+	}
+
+	app := fiber.New(appConfig)
 
 	return &WebServer{
 		App: app,
