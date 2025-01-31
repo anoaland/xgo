@@ -40,6 +40,14 @@ func Log(message string, args ...any) {
 	logger.Debug(message, logger.ArgsFromMap(vargs))
 }
 
+func Info(message string, args ...any) {
+	pterm.Info.Printfln(message, args...)
+}
+
+func Warn(message string, args ...any) {
+	pterm.Warning.Printfln(message, args...)
+}
+
 type JsonWriter struct {
 	Message string
 }
