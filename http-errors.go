@@ -29,6 +29,14 @@ func NewHttpInternalError(part string, err error) *xgoErrors.XgoError {
 	return xgoErrors.NewHttpError(part, err, fiber.StatusInternalServerError, 1)
 }
 
+func NewHttpBadGatewayError(part string, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError(part, err, fiber.StatusBadGateway, 1)
+}
+
+func NewHttpCustomError(part string, httpStatusCode int, err error) *xgoErrors.XgoError {
+	return xgoErrors.NewHttpError(part, err, httpStatusCode, 1)
+}
+
 // AsXgoError converts a given error into an XgoError. It attempts to match the error
 // to known error types and returns a corresponding XgoError. If the error is of type
 // *fiber.Error, it creates a new XgoError with the "FIBER" category. If the error is
