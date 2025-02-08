@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Connect(config *PgDatabaseConfig) *gorm.DB {
+func Connect(config *PgDatabaseConfig, opts ...gorm.Option) *gorm.DB {
 
 	dbname := config.Name
 	host := config.Host
@@ -20,7 +20,7 @@ func Connect(config *PgDatabaseConfig) *gorm.DB {
 		config.Port,
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), opts...)
 
 	if err != nil {
 		log.Fatalf("failed to connect database '%s' on '%s'", dbname, host)
