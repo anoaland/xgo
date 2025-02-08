@@ -56,7 +56,12 @@ func AsXgoError(err error) *xgoErrors.XgoError {
 	}
 
 	if fiberError, ok := err.(*fiber.Error); ok {
-		return xgoErrors.NewError("FIBER", fiberError)
+		return &xgoErrors.XgoError{
+			Message:       fiberError.Message,
+			IsFatal:       fiberError.Code >= 500,
+			HttpErrorCode: fiberError.Code,
+			Part:          "FIBER",
+		}
 	}
 
 	var goCloakErr *gocloak.APIError
