@@ -98,6 +98,74 @@ func (hc *HttpClient) Send() (interface{}, error) {
 
 }
 
+func (hc *HttpClient) SendWithType(successType, errorType interface{}) error {
+	// setup user agent
+	client := fiber.AcquireAgent()
+
+	// setup request
+	clientReq := client.Request()
+	clientReq.SetRequestURI(hc.Url)
+	clientReq.Header.SetMethod(hc.Method)
+
+	// setup custom headers
+	if hc.Headers != nil {
+		for _, header := range hc.Headers {
+			clientReq.Header.Set(header.Key, header.Value)
+		}
+	} else {
+		clientReq.Header.SetContentType(JSON_CONTENT_TYPE)
+	}
+
+	if hc.Payload != nil {
+		clientReq.SetBody(hc.Payload)
+	}
+
+	if hc.Args != nil {
+		client.Form(hc.Args)
+		fiber.ReleaseArgs(hc.Args)
+	}
+
+	// log request
+	if hc.LogRequest {
+		fmt.Println(clientReq.String())
+	}
+
+	if err := client.Parse(); err != nil {
+		return err
+	}
+
+	// get response raw
+	respCode, respBody, respErrs := client.Bytes()
+	hc.RespHttpCode = respCode
+	if respErrs != nil {
+		err := errors.New(extractResponseErrors(respErrs))
+		return err
+	}
+
+	if respCode >= 300 {
+		err := unmarshalResponse(errorType, respBody)
+
+		if err != nil {
+			return err
+		}
+
+		if hc.Payload != nil {
+			fmt.Printf("❌ HTTP ERROR REQUEST PAYLOAD  %s", string(hc.Payload))
+		}
+		fmt.Printf("❌ HTTP ERROR RESPONSE [%d] %s", respCode, string(respBody))
+		err = xgoErrors.NewHttpError("HTTP_CLIENT", errors.New(string(respBody)), respCode, 2)
+		return err
+	}
+
+	// log response
+	if hc.LogResponse {
+		fmt.Printf("response : [%d] %s", respCode, respBody)
+	}
+
+	return unmarshalResponse(hc.ResponseSuccess, respBody)
+
+}
+
 func resolveResponse(responseType interface{}, respBody []byte) (interface{}, error) {
 	if responseType != nil {
 
@@ -110,6 +178,21 @@ func resolveResponse(responseType interface{}, respBody []byte) (interface{}, er
 
 	}
 	return respBody, nil
+}
+
+func unmarshalResponse(responseType interface{}, respBody []byte) error {
+
+	if responseType == nil {
+		return errors.New("response type is nil")
+	}
+
+	err := json.Unmarshal(respBody, &responseType)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return nil
+
 }
 
 func extractResponseErrors(errors []error) string {
