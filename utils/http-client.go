@@ -153,8 +153,7 @@ func (hc *HttpClient) SendWithType(successType, errorType interface{}) error {
 			fmt.Printf("❌ HTTP ERROR REQUEST PAYLOAD  %s", string(hc.Payload))
 		}
 		fmt.Printf("❌ HTTP ERROR RESPONSE [%d] %s", respCode, string(respBody))
-		err = xgoErrors.NewHttpError("HTTP_CLIENT", errors.New(string(respBody)), respCode, 2)
-		return err
+		return nil
 	}
 
 	// log response
