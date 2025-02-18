@@ -58,7 +58,7 @@ func AsXgoError(err error) *xgoErrors.XgoError {
 	if fiberError, ok := err.(*fiber.Error); ok {
 		return &xgoErrors.XgoError{
 			Message:       fiberError.Message,
-			IsFatal:       fiberError.Code >= 500,
+			IsFatal:       fiberError.Code == fiber.StatusInternalServerError,
 			HttpErrorCode: fiberError.Code,
 			Part:          "FIBER",
 		}

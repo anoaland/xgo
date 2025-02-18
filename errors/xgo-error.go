@@ -21,6 +21,11 @@ type XgoError struct {
 	Callers       []string
 }
 
+type XgoHttpError struct {
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+}
+
 func NewError(part string, err error) *XgoError {
 	return NewHttpError(part, err, 500, 1)
 }
@@ -63,7 +68,7 @@ func NewHttpError(part string, err error, httpErrorCode int, callerSkip int) *Xg
 		File:          file,
 		Line:          line,
 		HttpErrorCode: httpErrorCode,
-		IsFatal:       httpErrorCode >= 500,
+		IsFatal:       httpErrorCode == fiber.StatusInternalServerError,
 		Stack:         strings.Join(stack, "\n"),
 	}
 }
@@ -109,9 +114,9 @@ func (err *XgoError) FiberJsonResponse(ctx *fiber.Ctx, fatalErrorMessage string)
 		message = fatalErrorMessage
 	}
 
-	return ctx.Status(err.HttpErrorCode).JSON(fiber.Map{
-		"message": message,
-		"code":    err.HttpErrorCode,
+	return ctx.Status(err.HttpErrorCode).JSON(XgoHttpError{
+		Message: message,
+		Code:    err.HttpErrorCode,
 	})
 }
 
