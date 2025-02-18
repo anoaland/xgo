@@ -161,7 +161,7 @@ func (hc *HttpClient) SendWithType(successType, errorType interface{}) error {
 		fmt.Printf("response : [%d] %s", respCode, respBody)
 	}
 
-	return unmarshalResponse(hc.ResponseSuccess, respBody)
+	return unmarshalResponse(successType, respBody)
 
 }
 
