@@ -10,6 +10,7 @@ import (
 	"github.com/anoaland/xgo/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/google/uuid"
 	"github.com/pterm/pterm"
 	"github.com/rs/zerolog"
 )
@@ -27,24 +28,36 @@ type UseErrorHandlerConfig struct {
 // The error handling can be configured by passing a UseErrorHandlerConfig struct, which allows setting a custom logger.
 func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 	var (
-		logger zerolog.Logger
+		logger *zerolog.Logger
 	)
 
 	if len(config) == 0 {
-		logger = zerolog.New(defaultErrorWriter())
+		zeroLog := zerolog.New(defaultErrorWriter())
+		logger = &zeroLog
 	} else {
 		if config[0].Logger != nil {
-			logger = *config[0].Logger
+			logger = config[0].Logger
 		} else if config[0].Writer != nil {
-			logger = zerolog.New(config[0].Writer)
+			zerolog := zerolog.New(config[0].Writer)
+			logger = &zerolog
 		} else {
-			logger = zerolog.New(defaultErrorWriter())
+			zeroLog := zerolog.New(defaultErrorWriter())
+			logger = &zeroLog
 		}
 	}
 
-	startTimeHandler := func(c *fiber.Ctx) error {
-		c.Locals("xgo_use_error_handler_startTime", time.Now()) // Store the start time in locals
-		return c.Next()
+	startTimeHandler := func(ctx *fiber.Ctx) error {
+		requestID := ctx.Get("x-request-id")
+		if requestID == "" {
+			requestID = uuid.New().String()
+		}
+
+		ctx.Locals("xgo_use_error_handler_startTime", time.Now()) // Store the start time in locals
+		logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
+
+			return c.Str("request_id", requestID)
+		})
+		return ctx.Next()
 	}
 
 	panicRecoverHandler := recover.New(recover.Config{
