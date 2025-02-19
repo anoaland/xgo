@@ -15,18 +15,29 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type UseErrorHandlerConfig struct {
+type UseLoggerConfig struct {
 	Writer io.Writer
 	Logger *zerolog.Logger
 }
 
-// UseErrorHandler is a middleware function that provides error handling for a WebServer.
+// UseLogger is a middleware function that provides error handling and logging for a WebServer.
 // It sets up three middleware functions:
-// 1. startTimeHandler - Stores the start time of the request in the context.
-// 2. panicRecoverHandler - Recovers from panics and stores the stack trace in the context.
-// 3. errorHandler - Logs errors that occur during the request, including the request details, latency, and stack trace.
-// The error handling can be configured by passing a UseErrorHandlerConfig struct, which allows setting a custom logger.
-func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
+//  1. startTimeHandler - Stores the start time of the request and generates a unique request ID if not provided.
+//     The request ID is stored in the context for tracking purposes.
+//  2. panicRecoverHandler - Recovers from panics and stores the stack trace in the context.
+//  3. errorHandler - Logs errors that occur during the request, including the request details, latency, and stack trace.
+//     It also logs successful requests with their details.
+//
+// The error handling can be configured by passing a UseLoggerConfig struct, which allows setting a custom logger or writer.
+//
+// The request ID is used to uniquely identify each request, which helps in tracking and debugging issues across different parts of the system.
+//
+// Activity logs are generated for both successful and failed requests. For successful requests, the log includes the request path, method, IP, and latency.
+// For failed requests, the log includes additional details such as the error message, HTTP status code, and stack trace.
+//
+// Parameters:
+// - config: Optional configuration for the logger, allowing customization of the logger or writer.
+func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 	var (
 		logger *zerolog.Logger
 	)
