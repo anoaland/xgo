@@ -80,13 +80,20 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 
 	errorHandler := func(ctx *fiber.Ctx) error {
 		err := ctx.Next()
+		start := ctx.Locals("xgo_use_error_handler_startTime").(time.Time)
+		latency := time.Since(start)
 		if err == nil {
+
+			logger.Trace().Ctx(ctx.UserContext()).
+				Str("path", ctx.Path()).
+				Str("method", ctx.Method()).
+				Str("ip", ctx.IP()).
+				Str("latency", latency.String()).
+				Msg("success")
 			return nil
 		}
 
 		xgoError := AsXgoError(err)
-		start := ctx.Locals("xgo_use_error_handler_startTime").(time.Time)
-		latency := time.Since(start)
 
 		evt := logger.Error().
 			Str("path", ctx.Path()).
