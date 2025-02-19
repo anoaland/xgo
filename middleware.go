@@ -52,9 +52,9 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 			requestID = uuid.New().String()
 		}
 
-		ctx.Locals("xgo_use_error_handler_startTime", time.Now()) // Store the start time in locals
+		ctx.Locals("xgo_use_logger_requestID", requestID)
+		ctx.Locals("xgo_use_logger_startTime", time.Now()) // Store the start time in locals
 		logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
-
 			return c.Str("request_id", requestID)
 		})
 		return ctx.Next()
@@ -74,13 +74,13 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 				}
 				stack = append(stack, fmt.Sprintf("%s:%d %s", frame.File, frame.Line, frame.Function))
 			}
-			c.Locals("xgo_use_error_handler_stackError", stack)
+			c.Locals("xgo_use_logger_stackError", stack)
 		},
 	})
 
 	errorHandler := func(ctx *fiber.Ctx) error {
 		err := ctx.Next()
-		start := ctx.Locals("xgo_use_error_handler_startTime").(time.Time)
+		start := ctx.Locals("xgo_use_logger_startTime").(time.Time)
 		latency := time.Since(start)
 		if err == nil {
 
@@ -105,7 +105,7 @@ func (server *WebServer) UseErrorHandler(config ...UseErrorHandlerConfig) {
 			Str("part", xgoError.Part)
 
 		var stack []string
-		if stackError := ctx.Locals("xgo_use_error_handler_stackError"); stackError != nil {
+		if stackError := ctx.Locals("xgo_use_logger_stackError"); stackError != nil {
 			stack = stackError.([]string)
 		}
 

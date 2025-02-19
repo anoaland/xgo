@@ -1,6 +1,7 @@
 package xgo
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -103,4 +104,8 @@ func (server *WebServer) Run(port int, onShutdown func() error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (server *WebServer) LoggerContext(ctx *fiber.Ctx) context.Context {
+	return context.WithValue(ctx.Context(), "fiber", ctx)
 }
