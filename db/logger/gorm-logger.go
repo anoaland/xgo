@@ -71,7 +71,7 @@ func (l *ZerologGormLogger) Trace(ctx context.Context, begin time.Time, fc func(
 	sql, rows := fc()
 
 	msg := "SQL query"
-	event := l.logger.Trace()
+	event := l.logger.Info()
 	if err != nil {
 		event = l.logger.Error().Err(err)
 	} else if latency > l.config.SlowThreshold {

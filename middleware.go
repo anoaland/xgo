@@ -11,7 +11,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/google/uuid"
-	"github.com/pterm/pterm"
 	"github.com/rs/zerolog"
 )
 
@@ -43,7 +42,7 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 	)
 
 	if len(config) == 0 {
-		zeroLog := zerolog.New(defaultErrorWriter())
+		zeroLog := zerolog.New(DefaultLogWriter())
 		logger = &zeroLog
 	} else {
 		if config[0].Logger != nil {
@@ -52,7 +51,7 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 			zerolog := zerolog.New(config[0].Writer)
 			logger = &zerolog
 		} else {
-			zeroLog := zerolog.New(defaultErrorWriter())
+			zeroLog := zerolog.New(DefaultLogWriter())
 			logger = &zeroLog
 		}
 	}
@@ -95,7 +94,7 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 		latency := time.Since(start)
 		if err == nil {
 
-			logger.Trace().Ctx(ctx.UserContext()).
+			logger.Info().Ctx(ctx.UserContext()).
 				Str("path", ctx.Path()).
 				Str("method", ctx.Method()).
 				Str("ip", ctx.IP()).
@@ -143,8 +142,6 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 	server.App.Use(panicRecoverHandler)
 }
 
-func defaultErrorWriter() io.Writer {
-	return utils.JsonWriter{
-		Message: pterm.BgRed.Sprint(" ERROR "),
-	}
+func DefaultLogWriter() io.Writer {
+	return utils.JsonWriter{}
 }
