@@ -1,8 +1,8 @@
 package database
 
 import (
+	"context"
 	"fmt"
-	"log"
 
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
@@ -15,10 +15,12 @@ func Connect(config *SqlServerDatabaseConfig, opts ...gorm.Option) *gorm.DB {
 	dbname := config.Name
 	host := config.Host
 	if err != nil {
-		log.Fatalf("failed to connect database '%s' on '%s'", dbname, host)
+		db.Logger.Error(context.Background(), fmt.Sprintf("failed to connect database '%s' on '%s'", dbname, host))
+		db.Logger.Error(context.Background(), err.Error())
+		panic(err)
 	}
 
-	log.Printf("Successfully connected to database '%s' on '%s'", dbname, host)
+	db.Logger.Info(context.Background(), fmt.Sprintf("Successfully connected to database '%s' on '%s'", dbname, host))
 
 	return db
 }

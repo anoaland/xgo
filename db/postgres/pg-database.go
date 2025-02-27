@@ -1,8 +1,8 @@
 package database
 
 import (
+	"context"
 	"fmt"
-	"log"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -23,10 +23,12 @@ func Connect(config *PgDatabaseConfig, opts ...gorm.Option) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dsn), opts...)
 
 	if err != nil {
-		log.Fatalf("failed to connect database '%s' on '%s'", dbname, host)
+		db.Logger.Error(context.Background(), fmt.Sprintf("failed to connect database '%s' on '%s'", dbname, host))
+		db.Logger.Error(context.Background(), err.Error())
+		panic(err)
 	}
 
-	log.Printf("Successfully connected to database '%s' on '%s'", dbname, host)
+	db.Logger.Info(context.Background(), fmt.Sprintf("Successfully connected to database '%s' on '%s'", dbname, host))
 
 	return db
 }
