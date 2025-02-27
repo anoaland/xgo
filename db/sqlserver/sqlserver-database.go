@@ -4,23 +4,26 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/anoaland/xgo/db/logger"
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 )
 
 func Connect(config *SqlServerDatabaseConfig, opts ...gorm.Option) *gorm.DB {
-	dsn := config.Dsn(nil)
-	db, err := gorm.Open(sqlserver.Open(dsn), opts...)
+	log := logger.LogFromOpts(opts...)
 
+	dsn := config.Dsn(nil)
 	dbname := config.Name
 	host := config.Host
+
+	db, err := gorm.Open(sqlserver.Open(dsn), opts...)
 	if err != nil {
-		db.Logger.Error(context.Background(), fmt.Sprintf("failed to connect database '%s' on '%s'", dbname, host))
-		db.Logger.Error(context.Background(), err.Error())
+		log.Error(context.Background(), fmt.Sprintf("failed to connect database '%s' on '%s'", dbname, host))
+		log.Error(context.Background(), err.Error())
 		panic(err)
 	}
 
-	db.Logger.Info(context.Background(), fmt.Sprintf("Successfully connected to database '%s' on '%s'", dbname, host))
+	log.Info(context.Background(), fmt.Sprintf("Successfully connected to database '%s' on '%s'", dbname, host))
 
 	return db
 }
