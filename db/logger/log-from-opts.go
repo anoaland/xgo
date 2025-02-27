@@ -18,5 +18,5 @@ func LogFromOpts(opts ...gorm.Option) gormlogger.Interface {
 		log = gormlogger.Default
 	}
 
-	return log.LogMode(gormlogger.Error)
+	return log.LogMode(gormlogger.Info)
 }

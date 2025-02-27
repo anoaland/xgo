@@ -25,7 +25,7 @@ func NewZerologGormLogger(logger *zerolog.Logger, configs ...gormlogger.Config) 
 	} else {
 		config = gormlogger.Config{
 			SlowThreshold:             200 * time.Millisecond,
-			LogLevel:                  gormlogger.Warn,
+			LogLevel:                  gormlogger.Info,
 			IgnoreRecordNotFoundError: false,
 			Colorful:                  true,
 		}
