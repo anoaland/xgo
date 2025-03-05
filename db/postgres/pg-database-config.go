@@ -29,6 +29,8 @@ func (config PgDatabaseConfig) IsValid() bool {
 	return !notValid
 }
 
+// Dsn returns a fully qualified PostgreSQL connection string including database name.
+// This is used for normal database operations.
 func (config PgDatabaseConfig) Dsn() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		config.User,
@@ -36,5 +38,16 @@ func (config PgDatabaseConfig) Dsn() string {
 		config.Host,
 		config.Port,
 		config.Name,
+	)
+}
+
+// Dsn returns a fully qualified PostgreSQL connection string excluding the database name.
+// This is used for testing operations like dropping or creating a test database.
+func (config PgDatabaseConfig) DsnWithoutDB() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s?sslmode=disable",
+		config.User,
+		config.Password,
+		config.Host,
+		config.Port,
 	)
 }
