@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
-	"gorm.io/gorm/logger"
+
 	gormlogger "gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
 )
@@ -15,7 +15,7 @@ import (
 type ZerologGormLogger struct {
 	logger   zerolog.Logger
 	config   gormlogger.Config
-	LogLevel logger.LogLevel
+	LogLevel gormlogger.LogLevel
 }
 
 func NewZerologGormLogger(logger *zerolog.Logger, configs ...gormlogger.Config) *ZerologGormLogger {
@@ -39,7 +39,7 @@ func NewZerologGormLogger(logger *zerolog.Logger, configs ...gormlogger.Config) 
 }
 
 // LogMode sets the log level
-func (l *ZerologGormLogger) LogMode(level logger.LogLevel) logger.Interface {
+func (l *ZerologGormLogger) LogMode(level gormlogger.LogLevel) gormlogger.Interface {
 	newLogger := *l
 	newLogger.LogLevel = level
 	return &newLogger
@@ -47,21 +47,21 @@ func (l *ZerologGormLogger) LogMode(level logger.LogLevel) logger.Interface {
 
 // Info logs general info messages
 func (l *ZerologGormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
-	if l.LogLevel >= logger.Info {
+	if l.LogLevel >= gormlogger.Info {
 		l.logger.Info().Msgf(msg, data...)
 	}
 }
 
 // Warn logs warning messages
 func (l *ZerologGormLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
-	if l.LogLevel >= logger.Warn {
+	if l.LogLevel >= gormlogger.Warn {
 		l.logger.Warn().Msgf(msg, data...)
 	}
 }
 
 // Error logs error messages
 func (l *ZerologGormLogger) Error(ctx context.Context, msg string, data ...interface{}) {
-	if l.LogLevel >= logger.Error {
+	if l.LogLevel >= gormlogger.Error {
 		l.logger.Error().Msgf(msg, data...)
 	}
 }
