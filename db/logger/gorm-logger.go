@@ -32,8 +32,9 @@ func NewZerologGormLogger(logger *zerolog.Logger, configs ...gormlogger.Config) 
 	}
 
 	return &ZerologGormLogger{
-		logger: *logger,
-		config: config,
+		logger:   *logger,
+		config:   config,
+		LogLevel: config.LogLevel,
 	}
 }
 
