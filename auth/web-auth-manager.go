@@ -1,6 +1,7 @@
 package auth
 
 import (
+	stdErrors "errors"
 	"strings"
 
 	"github.com/anoaland/xgo/errors"
@@ -72,7 +73,7 @@ func (m *WebAuthManager) AuthGuardMiddleware(ctx *fiber.Ctx) error {
 	//
 
 	if token == nil {
-		return errors.NewHttpError("WEB_AUTH_MANAGER__TOKEN_EMPTY", nil, fiber.ErrUnauthorized.Code, fiber.StatusUnauthorized)
+		return errors.NewHttpError("WEB_AUTH_MANAGER__TOKEN_EMPTY", stdErrors.New("invalid token"), fiber.ErrUnauthorized.Code, fiber.StatusUnauthorized)
 	}
 
 	user, err := m.client.GetUserFromToken(*token)
