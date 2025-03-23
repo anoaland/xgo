@@ -106,6 +106,29 @@ func (server *WebServer) Run(port int, onShutdown func() error) {
 	}
 }
 
+func (server *WebServer) RunOnAddress(addr string, onShutdown func() error) {
+
+	// Listen for syscall signals for process to interrupt/quit
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		_ = <-c
+		fmt.Println("\r\nGracefully shutting down...")
+		_ = server.App.Shutdown()
+	}()
+
+	err := server.App.Listen(addr)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = onShutdown()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func (server *WebServer) LoggerContext(ctx *fiber.Ctx) context.Context {
 	return context.WithValue(ctx.Context(), "fiber", ctx)
 }
