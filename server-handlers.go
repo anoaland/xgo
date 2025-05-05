@@ -25,6 +25,17 @@ func Response(ctx *fiber.Ctx, response any, successCode int, err error) error {
 		return err
 	}
 
+	switch v := response.(type) {
+	case nil:
+		return ctx.Status(successCode).JSON(fiber.Map{
+			"data": nil,
+		})
+	case string, int, float64, bool:
+		return ctx.Status(successCode).JSON(fiber.Map{
+			"data": v,
+		})
+	}
+
 	return ctx.Status(successCode).JSON(response)
 }
 
