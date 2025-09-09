@@ -81,9 +81,12 @@ func (l *ZerologGormLogger) Trace(ctx context.Context, begin time.Time, fc func(
 	}
 
 	// Get Fiber context (see: server.LoggerContext)
-	if fiberCtx, ok := ctx.Value("fiber").(*fiber.Ctx); ok {
+	if fiberCtx, ok := ctx.Value("fiber").(*fiber.Ctx); ok && fiberCtx != nil {
 		requestID := fiberCtx.Locals("xgo_use_logger_requestID")
-		event.Any("request_id", requestID)
+		// Only add request_id if it's not nil
+		if requestID != nil {
+			event.Any("request_id", requestID)
+		}
 	}
 
 	arr := zerolog.Arr()
