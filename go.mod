@@ -5,6 +5,11 @@ go 1.21.6
 require (
 	github.com/Nerzal/gocloak v1.0.0
 	github.com/gofiber/fiber/v2 v2.52.4
+	github.com/pterm/pterm v0.12.80
+	github.com/rs/zerolog v1.33.0
+	github.com/tidwall/pretty v1.2.1
+	gorm.io/driver/postgres v1.5.7
+	gorm.io/driver/sqlserver v1.5.2
 )
 
 require (
@@ -35,18 +40,13 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/microsoft/go-mssqldb v1.6.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/pterm/pterm v0.12.80 // indirect
-	github.com/rs/zerolog v1.33.0 // indirect
-	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/zclconf/go-cty v1.14.1 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	gorm.io/driver/mysql v1.5.1 // indirect
-	gorm.io/driver/postgres v1.5.7 // indirect
 	gorm.io/driver/sqlite v1.5.2 // indirect
-	gorm.io/driver/sqlserver v1.5.2 // indirect
 )
 
 require (
@@ -55,7 +55,7 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-playground/validator/v10 v10.19.0
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

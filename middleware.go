@@ -19,6 +19,45 @@ type UseLoggerConfig struct {
 	Logger *zerolog.Logger
 }
 
+// LoggerFactory creates a new logger instance for each request
+type LoggerFactory struct {
+	baseWriter io.Writer
+	baseLogger *zerolog.Logger
+}
+
+func NewLoggerFactory(config ...UseLoggerConfig) *LoggerFactory {
+	factory := &LoggerFactory{}
+
+	if len(config) > 0 {
+		if config[0].Logger != nil {
+			factory.baseLogger = config[0].Logger
+		} else if config[0].Writer != nil {
+			factory.baseWriter = config[0].Writer
+		} else {
+			factory.baseWriter = DefaultLogWriter()
+		}
+	} else {
+		factory.baseWriter = DefaultLogWriter()
+	}
+
+	return factory
+}
+
+func (f *LoggerFactory) CreateRequestLogger(requestID string) *zerolog.Logger {
+	var baseLogger zerolog.Logger
+
+	if f.baseLogger != nil {
+		// Create a copy of the base logger to avoid shared state
+		baseLogger = f.baseLogger.With().Logger()
+	} else {
+		baseLogger = zerolog.New(f.baseWriter).With().Timestamp().Logger()
+	}
+
+	// Create request-specific logger with request_id
+	requestLogger := baseLogger.With().Str("request_id", requestID).Logger()
+	return &requestLogger
+}
+
 // UseLogger is a middleware function that provides error handling and logging for a WebServer.
 // It sets up three middleware functions:
 //  1. startTimeHandler - Stores the start time of the request and generates a unique request ID if not provided.
@@ -37,24 +76,8 @@ type UseLoggerConfig struct {
 // Parameters:
 // - config: Optional configuration for the logger, allowing customization of the logger or writer.
 func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
-	var (
-		logger *zerolog.Logger
-	)
-
-	if len(config) == 0 {
-		zeroLog := zerolog.New(DefaultLogWriter())
-		logger = &zeroLog
-	} else {
-		if config[0].Logger != nil {
-			logger = config[0].Logger
-		} else if config[0].Writer != nil {
-			zerolog := zerolog.New(config[0].Writer)
-			logger = &zerolog
-		} else {
-			zeroLog := zerolog.New(DefaultLogWriter())
-			logger = &zeroLog
-		}
-	}
+	// Create logger factory to avoid global logger issues
+	loggerFactory := NewLoggerFactory(config...)
 
 	startTimeHandler := func(ctx *fiber.Ctx) error {
 		requestID := ctx.Get("x-request-id")
@@ -64,9 +87,10 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 
 		ctx.Locals("xgo_use_logger_requestID", requestID)
 		ctx.Locals("xgo_use_logger_startTime", time.Now()) // Store the start time in locals
-		logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
-			return c.Str("request_id", requestID)
-		})
+
+		// Create a fresh logger instance for this request - no shared state
+		requestLogger := loggerFactory.CreateRequestLogger(requestID)
+		ctx.Locals("xgo_request_logger", requestLogger)
 		return ctx.Next()
 	}
 
@@ -92,9 +116,12 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 		err := ctx.Next()
 		start := ctx.Locals("xgo_use_logger_startTime").(time.Time)
 		latency := time.Since(start)
-		if err == nil {
 
-			logger.Info().Ctx(ctx.UserContext()).
+		// Get the per-request logger
+		requestLogger := ctx.Locals("xgo_request_logger").(*zerolog.Logger)
+
+		if err == nil {
+			requestLogger.Info().Ctx(ctx.UserContext()).
 				Str("path", ctx.Path()).
 				Str("method", ctx.Method()).
 				Str("ip", ctx.IP()).
@@ -105,7 +132,7 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 
 		xgoError := AsXgoError(err)
 
-		evt := logger.Error().
+		evt := requestLogger.Error().
 			Str("path", ctx.Path()).
 			Str("method", ctx.Method()).
 			Str("ip", ctx.IP()).
@@ -140,6 +167,55 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 	server.App.Use(startTimeHandler)
 	server.App.Use(errorHandler)
 	server.App.Use(panicRecoverHandler)
+}
+
+// GetRequestLogger retrieves the request-specific logger from the Fiber context.
+// This logger already includes the request_id in its context.
+// Returns nil if no logger is found (middleware not properly set up).
+func GetRequestLogger(ctx *fiber.Ctx) *zerolog.Logger {
+	logger := ctx.Locals("xgo_request_logger")
+	if logger == nil {
+		return nil
+	}
+	return logger.(*zerolog.Logger)
+}
+
+// GetRequestID retrieves the request ID from the Fiber context.
+// Returns empty string if no request ID is found.
+func GetRequestID(ctx *fiber.Ctx) string {
+	requestID := ctx.Locals("xgo_use_logger_requestID")
+	if requestID == nil {
+		return ""
+	}
+	return requestID.(string)
+}
+
+// LogWithContext is a helper function that logs with the request context if available.
+// If no request logger is found, it falls back to a default logger.
+// This is useful for logging outside of HTTP handlers.
+func LogWithContext(ctx *fiber.Ctx, level zerolog.Level, msg string) {
+	logger := GetRequestLogger(ctx)
+	if logger == nil {
+		// Fallback to default logger if no request logger available
+		defaultLogger := zerolog.New(DefaultLogWriter()).With().Timestamp().Logger()
+		logger = &defaultLogger
+	}
+
+	var event *zerolog.Event
+	switch level {
+	case zerolog.InfoLevel:
+		event = logger.Info()
+	case zerolog.WarnLevel:
+		event = logger.Warn()
+	case zerolog.ErrorLevel:
+		event = logger.Error()
+	case zerolog.DebugLevel:
+		event = logger.Debug()
+	default:
+		event = logger.Info()
+	}
+
+	event.Msg(msg)
 }
 
 func DefaultLogWriter() io.Writer {

@@ -13,6 +13,11 @@ import (
 	auth "github.com/anoaland/xgo/auth"
 )
 
+// Define context key type to avoid collisions
+type contextKey string
+
+const fiberContextKey contextKey = "fiber"
+
 type AuthManager interface {
 	GetCurrentUser(ctx *fiber.Ctx) interface{}
 }
@@ -130,5 +135,18 @@ func (server *WebServer) RunOnAddress(addr string, onShutdown func() error) {
 }
 
 func (server *WebServer) LoggerContext(ctx *fiber.Ctx) context.Context {
-	return context.WithValue(ctx.Context(), "fiber", ctx)
+	// Get the per-request logger with request_id context
+	requestLogger := GetRequestLogger(ctx)
+	if requestLogger == nil {
+		// Fallback to basic context if no request logger is available
+		return context.WithValue(context.Background(), fiberContextKey, ctx)
+	}
+
+	// Create a context with the request logger embedded
+	loggerCtx := requestLogger.WithContext(context.Background())
+
+	// Also store the fiber context for the GORM logger to access
+	loggerCtx = context.WithValue(loggerCtx, fiberContextKey, ctx)
+
+	return loggerCtx
 }

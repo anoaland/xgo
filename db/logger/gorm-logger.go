@@ -11,6 +11,11 @@ import (
 	"gorm.io/gorm/utils"
 )
 
+// Define context key type to avoid collisions (should match server.go)
+type contextKey string
+
+const fiberContextKey contextKey = "fiber"
+
 // ZerologGormLogger implements gorm/logger.Interface
 type ZerologGormLogger struct {
 	logger   zerolog.Logger
@@ -80,12 +85,19 @@ func (l *ZerologGormLogger) Trace(ctx context.Context, begin time.Time, fc func(
 		event = l.logger.Warn()
 	}
 
-	// Get Fiber context (see: server.LoggerContext)
-	if fiberCtx, ok := ctx.Value("fiber").(*fiber.Ctx); ok && fiberCtx != nil {
-		requestID := fiberCtx.Locals("xgo_use_logger_requestID")
-		// Only add request_id if it's not nil
-		if requestID != nil {
-			event.Any("request_id", requestID)
+	// Try to get per-request logger from Fiber context if available
+	// This ensures SQL logs include the same request_id as application logs
+	if fiberCtx, ok := ctx.Value(fiberContextKey).(*fiber.Ctx); ok && fiberCtx != nil {
+		if requestLogger := fiberCtx.Locals("xgo_request_logger"); requestLogger != nil {
+			// Use the per-request logger which already has request_id in context
+			loggerWithRequestID := requestLogger.(*zerolog.Logger)
+			event = loggerWithRequestID.Info()
+			if err != nil {
+				event = loggerWithRequestID.Error().Err(err)
+			} else if latency > l.config.SlowThreshold {
+				msg = "Slow query"
+				event = loggerWithRequestID.Warn()
+			}
 		}
 	}
 
