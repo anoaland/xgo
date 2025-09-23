@@ -4,17 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/anoaland/xgo/internal"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 
 	gormlogger "gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
 )
-
-// Define context key type to avoid collisions (should match server.go)
-type contextKey string
-
-const fiberContextKey contextKey = "fiber"
 
 // ZerologGormLogger implements gorm/logger.Interface
 type ZerologGormLogger struct {
@@ -87,8 +83,8 @@ func (l *ZerologGormLogger) Trace(ctx context.Context, begin time.Time, fc func(
 
 	// Try to get per-request logger from Fiber context if available
 	// This ensures SQL logs include the same request_id as application logs
-	if fiberCtx, ok := ctx.Value(fiberContextKey).(*fiber.Ctx); ok && fiberCtx != nil {
-		if requestLogger := fiberCtx.Locals("xgo_request_logger"); requestLogger != nil {
+	if fiberCtx, ok := ctx.Value(internal.FiberContextKey).(*fiber.Ctx); ok && fiberCtx != nil {
+		if requestLogger := fiberCtx.Locals(internal.RequestLoggerKey); requestLogger != nil {
 			// Use the per-request logger which already has request_id in context
 			loggerWithRequestID := requestLogger.(*zerolog.Logger)
 			event = loggerWithRequestID.Info()

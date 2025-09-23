@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/anoaland/xgo/internal"
 	"github.com/anoaland/xgo/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -85,12 +86,12 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 			requestID = uuid.New().String()
 		}
 
-		ctx.Locals("xgo_use_logger_requestID", requestID)
-		ctx.Locals("xgo_use_logger_startTime", time.Now()) // Store the start time in locals
+		ctx.Locals(internal.RequestIDKey, requestID)
+		ctx.Locals(internal.StartTimeKey, time.Now()) // Store the start time in locals
 
 		// Create a fresh logger instance for this request - no shared state
 		requestLogger := loggerFactory.CreateRequestLogger(requestID)
-		ctx.Locals("xgo_request_logger", requestLogger)
+		ctx.Locals(internal.RequestLoggerKey, requestLogger)
 		return ctx.Next()
 	}
 
@@ -108,17 +109,17 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 				}
 				stack = append(stack, fmt.Sprintf("%s:%d %s", frame.File, frame.Line, frame.Function))
 			}
-			c.Locals("xgo_use_logger_stackError", stack)
+			c.Locals(internal.StackErrorKey, stack)
 		},
 	})
 
 	errorHandler := func(ctx *fiber.Ctx) error {
 		err := ctx.Next()
-		start := ctx.Locals("xgo_use_logger_startTime").(time.Time)
+		start := ctx.Locals(internal.StartTimeKey).(time.Time)
 		latency := time.Since(start)
 
 		// Get the per-request logger
-		requestLogger := ctx.Locals("xgo_request_logger").(*zerolog.Logger)
+		requestLogger := ctx.Locals(internal.RequestLoggerKey).(*zerolog.Logger)
 
 		if err == nil {
 			requestLogger.Info().Ctx(ctx.UserContext()).
@@ -142,7 +143,7 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 			Str("part", xgoError.Part)
 
 		var stack []string
-		if stackError := ctx.Locals("xgo_use_logger_stackError"); stackError != nil {
+		if stackError := ctx.Locals(internal.StackErrorKey); stackError != nil {
 			stack = stackError.([]string)
 		}
 
@@ -173,7 +174,7 @@ func (server *WebServer) UseLogger(config ...UseLoggerConfig) {
 // This logger already includes the request_id in its context.
 // Returns nil if no logger is found (middleware not properly set up).
 func GetRequestLogger(ctx *fiber.Ctx) *zerolog.Logger {
-	logger := ctx.Locals("xgo_request_logger")
+	logger := ctx.Locals(internal.RequestLoggerKey)
 	if logger == nil {
 		return nil
 	}
@@ -183,7 +184,7 @@ func GetRequestLogger(ctx *fiber.Ctx) *zerolog.Logger {
 // GetRequestID retrieves the request ID from the Fiber context.
 // Returns empty string if no request ID is found.
 func GetRequestID(ctx *fiber.Ctx) string {
-	requestID := ctx.Locals("xgo_use_logger_requestID")
+	requestID := ctx.Locals(internal.RequestIDKey)
 	if requestID == nil {
 		return ""
 	}
