@@ -84,17 +84,27 @@ func (l *ZerologGormLogger) Trace(ctx context.Context, begin time.Time, fc func(
 	// Try to get per-request logger from Fiber context if available
 	// This ensures SQL logs include the same request_id as application logs
 	if fiberCtx, ok := ctx.Value(internal.FiberContextKey).(*fiber.Ctx); ok && fiberCtx != nil {
-		if requestLogger := fiberCtx.Locals(internal.RequestLoggerKey); requestLogger != nil {
-			// Use the per-request logger which already has request_id in context
-			loggerWithRequestID := requestLogger.(*zerolog.Logger)
-			event = loggerWithRequestID.Info()
-			if err != nil {
-				event = loggerWithRequestID.Error().Err(err)
-			} else if latency > l.config.SlowThreshold {
-				msg = "Slow query"
-				event = loggerWithRequestID.Warn()
+		// Add validation to check if the Fiber context is still valid
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// If panic occurs, silently continue with the default logger
+					return
+				}
+			}()
+
+			if requestLogger := fiberCtx.Locals(internal.RequestLoggerKey); requestLogger != nil {
+				// Use the per-request logger which already has request_id in context
+				loggerWithRequestID := requestLogger.(*zerolog.Logger)
+				event = loggerWithRequestID.Info()
+				if err != nil {
+					event = loggerWithRequestID.Error().Err(err)
+				} else if latency > l.config.SlowThreshold {
+					msg = "Slow query"
+					event = loggerWithRequestID.Warn()
+				}
 			}
-		}
+		}()
 	}
 
 	arr := zerolog.Arr()
